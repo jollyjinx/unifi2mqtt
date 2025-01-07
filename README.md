@@ -11,7 +11,7 @@
 
 ## Prerequisites
 
-- Swift 5.5 or later
+- Swift 6 or later, macOS, linux
 - Access to a UniFi controller with API key
 - MQTT broker credentials
 
@@ -23,12 +23,13 @@
    git clone https://github.com/jollyjinx/unifi2mqtt.git
     ```
 
-2. ** Build the Project:**
+2. **Build the Project:**
 
     ```bash
     cd unifi2mqtt
     swift build -c release
     ```
+    
 3. **Run the Executable:**
 
     ```bash
@@ -59,7 +60,7 @@
       -e, --emit-interval <emit-interval>
                               Minimum Emit Interval to send updates to mqtt Server. (default: 1.0)
       -b, --basetopic <basetopic>
-                              MQTT Server topic. (default: example/unifi/)
+                              MQTT Server topic. (default: unifi/)
       -h, --help              Show help information.
 
 ```
