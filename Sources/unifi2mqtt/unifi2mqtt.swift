@@ -136,6 +136,7 @@ struct UnifiHostObserver: Sendable
         withObservationTracking
         {
             _ = unifiHost.clients
+            _ = unifiHost.devices
         } onChange: {
             continuation.yield(())
             Task { await observe() }
