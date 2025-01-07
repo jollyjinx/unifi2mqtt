@@ -2,11 +2,11 @@
 //  unifi2mqtt.swift
 //
 
-import Foundation
-import Observation
 import ArgumentParser
+import Foundation
 import JLog
 import MQTTNIO
+import Observation
 import UnifiLibrary
 
 extension JLog.Level: @retroactive ExpressibleByArgument {}
@@ -25,8 +25,8 @@ struct unifi2mqtt: AsyncParsableCommand
 
     @Option(name: .long, help: "Unifi hostname") var unifiHostname: String = "unifi"
     @Option(name: .long, help: "Unifi port") var unifiPort: UInt16 = 8443
-    @Option(name: .long, help: "Unifi API key") var unifiAPIKey: String = ""
-    @Option(name: .long, help: "Unifi site id") var unifiSiteId: String = ""
+    @Option(name: .long, help: "Unifi API key") var unifiAPIKey: String 
+    @Option(name: .long, help: "Unifi site id") var unifiSiteId: String? = nil
     #if DEBUG
         @Option(name: .shortAndLong, help: "Unifi request interval.") var refreshInterval: Double = 1.0
     #else
@@ -58,15 +58,15 @@ struct unifi2mqtt: AsyncParsableCommand
 
         let mqttPublisher = try await MQTTPublisher(hostname: mqttServername, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval, baseTopic: basetopic, jsonOutput: jsonOutput)
 
-        let unifiHost = UnifiHost(host: unifiHostname, apiKey: unifiAPIKey, siteId: unifiSiteId, refreshInterval: refreshInterval)
+        let unifiHost = try await UnifiHost(host: unifiHostname, apiKey: unifiAPIKey, siteId: unifiSiteId, refreshInterval: refreshInterval)
 
         Task { await unifiHost.run() }
 
         let observationStream = AsyncStream<Void>
-                                    {   continuation in
-                                        let observer = UnifiHostObserver(unifiHost: unifiHost, continuation: continuation)
-                                        observer.observe()
-                                    }
+        { continuation in
+            let observer = UnifiHostObserver(unifiHost: unifiHost, continuation: continuation)
+            observer.observe()
+        }
 
         for await _ in observationStream
         {
@@ -76,13 +76,15 @@ struct unifi2mqtt: AsyncParsableCommand
 }
 
 @MainActor
-struct UnifiHostObserver : Sendable
+struct UnifiHostObserver: Sendable
 {
     let unifiHost: UnifiHost
     let continuation: AsyncStream<Void>.Continuation
 
-    func observe() {
-        withObservationTracking {
+    func observe()
+    {
+        withObservationTracking
+        {
             _ = unifiHost.clients
         } onChange: {
             continuation.yield(())

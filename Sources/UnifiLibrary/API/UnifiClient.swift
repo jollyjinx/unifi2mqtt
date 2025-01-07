@@ -1,17 +1,8 @@
 //
-//  UnifiClients.swift
+//  UnifiClient.swift
 //
 
 import Foundation
-
-public struct UnifiClientResponse: Codable, Sendable, Hashable, Equatable
-{
-    let offset: Int
-    let limit: Int
-    let count: Int
-    let totalCount: Int
-    let data: [UnifiClient]
-}
 
 public struct UnifiClient: Codable, Sendable, Hashable, Equatable
 {
