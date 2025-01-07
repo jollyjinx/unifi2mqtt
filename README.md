@@ -38,29 +38,36 @@
     USAGE: unifi2mqtt <options>
 
     OPTIONS:
-      --log-level <log-level> Set the log level. (values: trace, debug, info, notice, warning, error, critical; default: debug)
-      --json-output           send json output to stdout
-      --unifi-hostname <unifi-hostname>
-                              Unifi hostname (default: unifi)
-      --unifi-port <unifi-port>
-                              Unifi port (default: 8443)
-      --unifi-api-key <unifi-api-key>
-                              Unifi API key
-      --unifi-site-id <unifi-site-id>
-                              Unifi site id
-      -r, --refresh-interval <refresh-interval>
-                              Unifi request interval. (default: 1.0)
-      --mqtt-servername <mqtt-servername>
-                              MQTT Server hostname (default: mqtt)
-      --mqtt-port <mqtt-port> MQTT Server port (default: 1883)
-      --mqtt-username <mqtt-username>
-                              MQTT Server username (default: mqtt)
-      --mqtt-password <mqtt-password>
-                              MQTT Server password
-      -e, --emit-interval <emit-interval>
-                              Minimum Emit Interval to send updates to mqtt Server. (default: 1.0)
-      -b, --basetopic <basetopic>
-                              MQTT Server topic. (default: unifi/)
-      -h, --help              Show help information.
+    --log-level <log-level> Set the log level. (values: trace, debug, info, notice, warning, error, critical; default: debug)
+    --json-output           send json output to stdout
+    --unifi-hostname <unifi-hostname>
+                          Unifi hostname (default: unifi)
+    --unifi-port <unifi-port>
+                          Unifi port (default: 8443)
+    --unifi-api-key <unifi-api-key>
+                          Unifi API key
+    --unifi-site-id <unifi-site-id>
+                          Unifi site id
+    -r, --refresh-interval <refresh-interval>
+                          Unifi request interval. (default: 1.0)
+    --publishing-options <options>
+                          Specify publishing options as a comma-separated list. (default: hostsbyip, hostsbymac, hostsbyname, hostsbynetwork)
+        Available options: 
+        - hostsbyip: Publish hosts by IP address
+        - hostsbyname: Publish hosts by name
+        - hostsbymac: Publish hosts by MAC address
+        - hostsbynetwork: Publish hosts by network
+    --mqtt-servername <mqtt-servername>
+                          MQTT Server hostname (default: mqtt)
+    --mqtt-port <mqtt-port> MQTT Server port (default: 1883)
+    --mqtt-username <mqtt-username>
+                          MQTT Server username (default: mqtt)
+    --mqtt-password <mqtt-password>
+                          MQTT Server password
+    -e, --emit-interval <emit-interval>
+                          Minimum Emit Interval to send updates to mqtt Server. (default: 1.0)
+    -b, --basetopic <basetopic>
+                          MQTT Server topic. (default: unifi/)
+    -h, --help              Show help information.
 
 ```

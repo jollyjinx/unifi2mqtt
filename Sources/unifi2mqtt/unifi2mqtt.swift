@@ -25,13 +25,23 @@ struct unifi2mqtt: AsyncParsableCommand
 
     @Option(name: .long, help: "Unifi hostname") var unifiHostname: String = "unifi"
     @Option(name: .long, help: "Unifi port") var unifiPort: UInt16 = 8443
-    @Option(name: .long, help: "Unifi API key") var unifiAPIKey: String 
+    @Option(name: .long, help: "Unifi API key") var unifiAPIKey: String
     @Option(name: .long, help: "Unifi site id") var unifiSiteId: String? = nil
+
     #if DEBUG
         @Option(name: .shortAndLong, help: "Unifi request interval.") var refreshInterval: Double = 1.0
     #else
         @Option(name: .shortAndLong, help: "Unifi request interval.") var refreshInterval: Double = 10.0
     #endif
+    @Option(name: .long, help: ArgumentHelp(
+            "Specify publishing options as a comma-separated list.",
+            discussion: """
+            Available options: 
+            - \( PublishingOptions.allCases.map { $0.rawValue + ": " + $0.help }.joined(separator: "\n- ") )
+            """,
+            valueName: "options"
+        )
+        ) var publishingOptions: PublishingOptions = PublishingOptions(options:[.hostsbyip, .hostsbyname, .hostsbymac, .hostsbynetwork])
 
     @Option(name: .long, help: "MQTT Server hostname") var mqttServername: String = "mqtt"
     @Option(name: .long, help: "MQTT Server port") var mqttPort: UInt16 = 1883
@@ -70,7 +80,28 @@ struct unifi2mqtt: AsyncParsableCommand
 
         for await _ in observationStream
         {
-            try await mqttPublisher.publish(to: "clients", payload: unifiHost.clients.json, qos: .atMostOnce, retain: true)
+            for client in unifiHost.clients
+            {
+                for publishingOption in PublishingOptions.allCases
+                {
+                    switch publishingOption
+                    {
+                        case .hostsbyip:        if let ipAddress = client.ipAddress
+                                                {
+                                                    try await mqttPublisher.publish(to: "hostsbyip/\(ipAddress)", payload: client.json, qos: .atMostOnce, retain: true)
+                                                }
+
+                        case .hostsbyname:      try await mqttPublisher.publish(to: "hostsbyname/\(client.name)", payload: client.json, qos: .atMostOnce, retain: true)
+
+                        case .hostsbymac:       try await mqttPublisher.publish(to: "hostsbymac/\(client.macAddress)", payload: client.json, qos: .atMostOnce, retain: true)
+
+                        case .hostsbynetwork:   if let network = client.network
+                                                {
+                                                    try await mqttPublisher.publish(to: "networks/\(network)", payload: client.json, qos: .atMostOnce, retain: true)
+                                                }
+                    }
+                }
+            }
         }
     }
 }
