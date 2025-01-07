@@ -19,7 +19,8 @@ public final class UnifiHost
     private let siteId: String
     private let refreshInterval: TimeInterval
 
-    private let request: HTTPClientRequest
+    private let clientRequest: HTTPClientRequest
+    private let deviceRequest: HTTPClientRequest
     private let httpTimeout: TimeAmount
 
     static func findOutDefaultSiteId(host: String, apiKey: String, timeout: TimeAmount = .seconds(5)) async throws -> String
@@ -71,10 +72,15 @@ public final class UnifiHost
 
         self.refreshInterval = refreshInterval
         httpTimeout = timeout
-        var request = HTTPClientRequest(url: "https://\(host)/proxy/network/integrations/v1/sites/\(self.siteId)/clients?limit=\(limit)")
-        request.headers.add(name: "X-API-Key", value: apiKey)
-        request.headers.add(name: "Accept", value: "application/json")
-        self.request = request
+        var clientRequest = HTTPClientRequest(url: "https://\(host)/proxy/network/integrations/v1/sites/\(self.siteId)/clients?limit=\(limit)")
+        clientRequest.headers.add(name: "X-API-Key", value: apiKey)
+        clientRequest.headers.add(name: "Accept", value: "application/json")
+        self.clientRequest = clientRequest
+
+        var deviceRequest = HTTPClientRequest(url: "https://\(host)/proxy/network/integrations/v1/sites/\(self.siteId)/devices?limit=\(limit)")
+        deviceRequest.headers.add(name: "X-API-Key", value: apiKey)
+        deviceRequest.headers.add(name: "Accept", value: "application/json")
+        self.deviceRequest = deviceRequest
     }
 
     public func run() async
@@ -94,6 +100,7 @@ public final class UnifiHost
     }
 
     public var clients: Set<UnifiClient> = []
+    public var devices : Set<UnifiDevice> = []
 }
 
 extension UnifiHost
@@ -104,9 +111,30 @@ extension UnifiHost
         case invalidResponse
     }
 
-    func update() async throws
+    func update() async
     {
-        let response = try await HTTPClientProvider.sharedHttpClient.execute(request, timeout: httpTimeout)
+        do
+        {
+            try await updateClients()
+        }
+        catch
+        {
+            JLog.error("Error: \(error)")
+        }
+        do
+        {
+            try await updateDevices()
+        }
+        catch
+        {
+            JLog.error("Error: \(error)")
+        }
+    }
+
+
+    func updateClients() async throws
+    {
+        let response = try await HTTPClientProvider.sharedHttpClient.execute(clientRequest, timeout: httpTimeout)
         guard response.status == .ok else { throw Error.invalidResponse }
         var bodyData = Data()
         for try await buffer in response.body
@@ -123,6 +151,28 @@ extension UnifiHost
         if newClientSet != clients
         {
             clients = newClientSet
+        }
+    }
+
+    func updateDevices() async throws
+    {
+        let response = try await HTTPClientProvider.sharedHttpClient.execute(deviceRequest, timeout: httpTimeout)
+        guard response.status == .ok else { throw Error.invalidResponse }
+        var bodyData = Data()
+        for try await buffer in response.body
+        {
+            bodyData.append(Data(buffer: buffer))
+        }
+
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.dateDecodingStrategy = .iso8601
+
+        let unifiDevices = try jsonDecoder.decode(UnifiDevicesResponse.self, from: bodyData)
+
+        let newDeviceSet = Set(unifiDevices.data)
+        if newDeviceSet != devices
+        {
+            devices = newDeviceSet
         }
     }
 }

@@ -27,6 +27,10 @@ enum PublishingOption : String, CaseIterable, CustomStringConvertible
     case hostsbymac
     case hostsbynetwork
 
+    case devicesbyip
+    case devicesbyname
+    case devicesbymac
+
     var description: String { rawValue }
     var help: String {
         switch self
@@ -35,6 +39,10 @@ enum PublishingOption : String, CaseIterable, CustomStringConvertible
             case .hostsbyname:      return "Publish hosts by name"
             case .hostsbymac:       return "Publish hosts by MAC address"
             case .hostsbynetwork:   return "Publish hosts by network"
+
+            case .devicesbyip:      return "Publish unifi devices by IP address"
+            case .devicesbyname:    return "Publish unifi devices by name"
+            case .devicesbymac:     return "Publish unifi devices by MAC address"
         }
     }
 }

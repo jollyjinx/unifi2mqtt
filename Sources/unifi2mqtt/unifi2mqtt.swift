@@ -99,6 +99,25 @@ struct unifi2mqtt: AsyncParsableCommand
                                                 {
                                                     try await mqttPublisher.publish(to: "networks/\(network)", payload: client.json, qos: .atMostOnce, retain: true)
                                                 }
+                        default: break
+                    }
+                }
+            }
+            for device in unifiHost.devices
+            {
+                for publishingOption in publishingOptions.options
+                {
+                    switch publishingOption
+                    {
+                        case .devicesbyip:      if let ipAddress = device.ipAddress
+                                                {
+                                                    try await mqttPublisher.publish(to: "devices/\(ipAddress)", payload: device.json, qos: .atMostOnce, retain: true)
+                                                }
+                        case .devicesbyname:    try await mqttPublisher.publish(to: "devices/\(device.name)", payload: device.json, qos: .atMostOnce, retain: true)
+
+                        case .devicesbymac:     try await mqttPublisher.publish(to: "devices/\(device.macAddress)", payload: device.json, qos: .atMostOnce, retain: true)
+
+                        default: break
                     }
                 }
             }
