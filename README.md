@@ -38,7 +38,7 @@
     USAGE: unifi2mqtt <options>
 
     OPTIONS:
-    --log-level <log-level> Set the log level. (values: trace, debug, info, notice, warning, error, critical; default: debug)
+    --log-level <log-level> Set the log level. (values: trace, debug, info, notice, warning, error, critical; default: notice)
     --json-output           send json output to stdout
     --unifi-hostname <unifi-hostname>
                           Unifi hostname (default: unifi)
@@ -49,7 +49,7 @@
     --unifi-site-id <unifi-site-id>
                           Unifi site id
     -r, --refresh-interval <refresh-interval>
-                          Unifi request interval. (default: 1.0)
+                          Unifi request interval. (default: 10.0)
     --publishing-options <options>
                           Specify publishing options as a comma-separated list. (default: hostsbyip, hostsbymac, hostsbyname, hostsbynetwork)
         Available options: 
@@ -57,6 +57,9 @@
         - hostsbyname: Publish hosts by name
         - hostsbymac: Publish hosts by MAC address
         - hostsbynetwork: Publish hosts by network
+        - devicesbyip: Publish unifi devices by IP address
+        - devicesbyname: Publish unifi devices by name
+        - devicesbymac: Publish unifi devices by MAC address
     --mqtt-servername <mqtt-servername>
                           MQTT Server hostname (default: mqtt)
     --mqtt-port <mqtt-port> MQTT Server port (default: 1883)
@@ -69,5 +72,6 @@
     -b, --basetopic <basetopic>
                           MQTT Server topic. (default: unifi/)
     -h, --help              Show help information.
+
 
 ```
