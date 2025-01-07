@@ -82,7 +82,7 @@ struct unifi2mqtt: AsyncParsableCommand
         {
             for client in unifiHost.clients
             {
-                for publishingOption in PublishingOptions.allCases
+                for publishingOption in publishingOptions.options
                 {
                     switch publishingOption
                     {
