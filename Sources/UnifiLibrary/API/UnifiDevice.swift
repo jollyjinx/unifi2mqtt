@@ -1,5 +1,5 @@
 //
-//  UnifiClient.swift
+//  UnifiDevice.swift
 //
 
 import Foundation
@@ -20,6 +20,13 @@ public enum UnifiDeviceState: String, Codable, Sendable
 {
     case online = "ONLINE"
     case offline = "OFFLINE"
+    case pendingAdoption = "PENDING_ADOPTION"
+    case updating = "UPDATING"
+    case gettingReady = "GETTING_READY"
+    case adopting = "ADOPTING"
+    case deleting = "DELETING"
+    case connectionInterrupted = "CONNECTION_INTERRUPTED"
+    case isolated = "ISOLATED"
 }
 
 public enum UnfiDeviceFeatures: String, Codable, Sendable
@@ -32,4 +39,5 @@ public enum UnifiDeviceInterfaceType: String, Codable, Sendable
 {
     case radios
     case ports
+    case gateway
 }

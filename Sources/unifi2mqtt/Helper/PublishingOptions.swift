@@ -1,6 +1,8 @@
 //
 //  PublishingOptions.swift
-//  unifi2mqtt
+//
+
+unifi2mqtt
 //
 //  Created by Patrick Stein on 07.01.25.
 //
@@ -13,14 +15,14 @@ struct PublishingOptions: CustomStringConvertible
 
     var description: String
     {
-        options.sorted(by: <).map { $0.description }.joined(separator: ", ")
+        options.sorted(by: <).map(\.description).joined(separator: ", ")
     }
 
     static var allCases: [PublishingOption] { PublishingOption.allCases }
-    static var defaultValueDescription: String { allCases.map { $0.description }.joined(separator: ",") }
+    static var defaultValueDescription: String { allCases.map(\.description).joined(separator: ",") }
 }
 
-enum PublishingOption : String, CaseIterable, CustomStringConvertible
+enum PublishingOption: String, CaseIterable, CustomStringConvertible
 {
     case hostsbyid
     case hostsbyip
@@ -39,36 +41,34 @@ enum PublishingOption : String, CaseIterable, CustomStringConvertible
     case devicedetailsbymac
 
     var description: String { rawValue }
-    var help: String {
+    var help: String
+    {
         switch self
         {
-            case .hostsbyid:        return "Publish hosts by their unifi id"
-            case .hostsbyip:        return "Publish hosts by IP address"
-            case .hostsbyname:      return "Publish hosts by name"
-            case .hostsbymac:       return "Publish hosts by MAC address"
-            case .hostsbynetwork:   return "Publish hosts by network"
-
-            case .devicesbyid:      return "Publish unifi devices by their unifi id"
-            case .devicesbyip:      return "Publish unifi devices by IP address"
-            case .devicesbyname:    return "Publish unifi devices by name"
-            case .devicesbymac:     return "Publish unifi devices by MAC address"
-
-            case .devicedetailsbyid:    return "Publish unifi device details by their unifi id"
-            case .devicedetailsbyip:    return "Publish unifi device details by IP address"
-            case .devicedetailsbyname:  return "Publish unifi device details by name"
-            case .devicedetailsbymac:   return "Publish unifi device details by MAC address"
-
+            case .hostsbyid: return "Publish hosts by their unifi id"
+            case .hostsbyip: return "Publish hosts by IP address"
+            case .hostsbyname: return "Publish hosts by name"
+            case .hostsbymac: return "Publish hosts by MAC address"
+            case .hostsbynetwork: return "Publish hosts by network"
+            case .devicesbyid: return "Publish unifi devices by their unifi id"
+            case .devicesbyip: return "Publish unifi devices by IP address"
+            case .devicesbyname: return "Publish unifi devices by name"
+            case .devicesbymac: return "Publish unifi devices by MAC address"
+            case .devicedetailsbyid: return "Publish unifi device details by their unifi id"
+            case .devicedetailsbyip: return "Publish unifi device details by IP address"
+            case .devicedetailsbyname: return "Publish unifi device details by name"
+            case .devicedetailsbymac: return "Publish unifi device details by MAC address"
         }
     }
 }
-extension PublishingOption : Comparable
+
+extension PublishingOption: Comparable
 {
     static func < (lhs: PublishingOption, rhs: PublishingOption) -> Bool
     {
         lhs.rawValue < rhs.rawValue
     }
 }
-    
 
 extension PublishingOptions: ExpressibleByArgument
 {

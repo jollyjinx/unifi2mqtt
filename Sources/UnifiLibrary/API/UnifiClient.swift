@@ -45,8 +45,8 @@ extension UnifiClient: Codable
     }
 }
 
-//public extension UnifiClient
-//{
+// public extension UnifiClient
+// {
 //    var network: String?
 //    {
 //        if let ipAddress
@@ -55,7 +55,7 @@ extension UnifiClient: Codable
 //        }
 //        else { return nil }
 //    }
-//}
+// }
 
 public enum UnifiClientType: String, Codable, Sendable
 {

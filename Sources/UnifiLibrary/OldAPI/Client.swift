@@ -1,12 +1,10 @@
 //
-//  OldDeviceTableDevice.swift
-//  unifi2mqtt
+//  Client.swift
 //
-//  Created by Patrick Stein on 08.01.25.
-//
+
 import Foundation
 
-public struct Client : Codable, Sendable, Hashable, Equatable
+public struct Client: Codable, Sendable, Hashable, Equatable
 {
     public let last_ip: String
     public let first_seen: Date

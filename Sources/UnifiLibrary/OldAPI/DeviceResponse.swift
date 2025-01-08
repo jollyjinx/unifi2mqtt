@@ -1,14 +1,11 @@
 //
 //  DeviceResponse.swift
-//  unifi2mqtt
-//
-//  Created by Patrick Stein on 08.01.25.
 //
 
-public struct DeviceResponse : Sendable, Hashable, Equatable
+public struct DeviceResponse: Sendable, Hashable, Equatable
 {
-    public let meta : Meta
-    public let devices : [Device]
+    public let meta: Meta
+    public let devices: [Device]
 }
 
 extension DeviceResponse: Codable
@@ -20,12 +17,12 @@ extension DeviceResponse: Codable
     }
 }
 
-public struct Meta : Codable, Sendable, Hashable, Equatable
+public struct Meta: Codable, Sendable, Hashable, Equatable
 {
-   public let rc : OldRCString
+    public let rc: OldRCString
 }
 
-public enum OldRCString : Sendable, Hashable, Equatable
+public enum OldRCString: Sendable, Hashable, Equatable
 {
     case ok
     case unknown(String)
@@ -39,7 +36,7 @@ extension OldRCString: Codable
         switch self
         {
             case .ok: try container.encode("ok")
-            case .unknown(let value): try container.encode(value)
+            case let .unknown(value): try container.encode(value)
         }
     }
 
@@ -54,4 +51,3 @@ extension OldRCString: Codable
         }
     }
 }
-

@@ -27,10 +27,11 @@ public actor MQTTPublisher
         mqttQueue.async { _ = self.mqttClient.connect() }
     }
 
-    public func publish(to topics :[String], payload: String, qos: MQTTQoS, retain: Bool) async throws
+    public func publish(to topics: [String], payload: String, qos: MQTTQoS, retain: Bool) async throws
     {
-        try await publish(to: topics.map{ $0.mqttPath }.joined(separator: "/"), payload: payload, qos: qos, retain: retain)
+        try await publish(to: topics.map(\.mqttPath).joined(separator: "/"), payload: payload, qos: qos, retain: retain)
     }
+
     public func publish(to topic: String, payload: String, qos: MQTTQoS, retain: Bool) async throws
     {
         let topic = baseTopic + "/" + topic

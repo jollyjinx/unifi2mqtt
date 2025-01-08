@@ -1,12 +1,10 @@
 //
-//  OldDeviceTableDevice.swift
-//  unifi2mqtt
+//  Device.swift
 //
-//  Created by Patrick Stein on 08.01.25.
-//
+
 import Foundation
 
-public struct Device : Codable, Sendable, Hashable, Equatable
+public struct Device: Codable, Sendable, Hashable, Equatable
 {
     public let model: String
     public let name: String
@@ -15,7 +13,7 @@ public struct Device : Codable, Sendable, Hashable, Equatable
     public let reported_networks: [ReportedNetwork]?
 }
 
-public struct ReportedNetwork : Codable, Sendable, Hashable, Equatable
+public struct ReportedNetwork: Codable, Sendable, Hashable, Equatable
 {
     public let name: String
     public let address: String?

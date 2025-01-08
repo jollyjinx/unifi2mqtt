@@ -1,5 +1,5 @@
 //
-//  UnifiSitesResponse.swift
+//  UnifiDevicesResponse.swift
 //
 
 import Foundation

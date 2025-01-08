@@ -1,5 +1,5 @@
 //
-//  UnifiClient.swift
+//  UnifiDeviceDetail.swift
 //
 
 import Foundation
@@ -17,14 +17,14 @@ public struct UnifiDeviceDetail: Sendable, Codable, Hashable, Equatable
     public let provisionedAt: Date
     public let configurationId: String
     public let uplink: [String: String]?
-    public let features: [String: [String:String] ]
+    public let features: [String: [String: String]]
     public let interfaces: UnifiDeviceInterfaceDetails
 }
 
 public struct UnifiDeviceInterfaceDetails: Sendable, Codable, Hashable, Equatable
 {
-    public let radios : [UnifiDeviceRadioDetail]?
-    public let ports : [UnifiDevicePortDetail]?
+    public let radios: [UnifiDeviceRadioDetail]?
+    public let ports: [UnifiDevicePortDetail]?
 }
 
 public struct UnifiDeviceRadioDetail: Sendable, Codable, Hashable, Equatable
@@ -43,4 +43,3 @@ public struct UnifiDevicePortDetail: Sendable, Codable, Hashable, Equatable
     public let maxSpeedMbps: Int
     public let speedMbps: Int?
 }
-

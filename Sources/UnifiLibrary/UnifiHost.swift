@@ -88,7 +88,6 @@ public final class UnifiHost
         oldDeviceRequest.headers.add(name: "X-API-Key", value: apiKey)
         oldDeviceRequest.headers.add(name: "Accept", value: "application/json")
         self.oldDeviceRequest = oldDeviceRequest
-
     }
 
     public func run() async
@@ -101,14 +100,14 @@ public final class UnifiHost
     }
 
     public var clients: Set<UnifiClient> = []
-    public var devices : Set<UnifiDevice> = []
+    public var devices: Set<UnifiDevice> = []
     public var deviceDetails: Set<UnifiDeviceDetail> = []
     public var networks: Set<IPv4Network> = []
 
     public var lastUpdate: Date = .distantPast
     public var maximumRefreshInterval: TimeInterval = 30.0
 
-    var shouldRefresh : Bool { lastUpdate < Date() - maximumRefreshInterval }
+    var shouldRefresh: Bool { lastUpdate < Date() - maximumRefreshInterval }
 }
 
 extension UnifiHost
@@ -129,7 +128,6 @@ extension UnifiHost
         {
             JLog.error("Error: \(error)")
         }
-
 
         do
         {
@@ -178,8 +176,8 @@ extension UnifiHost
             guard let networks = device.reported_networks else { continue }
             for network in networks
             {
-                if  let address = network.address,
-                    let network = IPv4Network(address)
+                if let address = network.address,
+                   let network = IPv4Network(address)
                 {
                     newNetworks.insert(network)
                 }
@@ -192,10 +190,6 @@ extension UnifiHost
             lastUpdate = Date()
         }
     }
-
-
-
-
 
     func updateClients() async throws
     {
@@ -214,7 +208,7 @@ extension UnifiHost
 
         let newClientSet = Set(unifiClients.data)
 
-        if newClientSet != clients  || shouldRefresh
+        if newClientSet != clients || shouldRefresh
         {
             clients = newClientSet
             lastUpdate = Date()
@@ -237,7 +231,7 @@ extension UnifiHost
         let unifiDevices = try jsonDecoder.decode(UnifiDevicesResponse.self, from: bodyData)
 
         let newDeviceSet = Set(unifiDevices.data)
-        if newDeviceSet != devices  || shouldRefresh
+        if newDeviceSet != devices || shouldRefresh
         {
             devices = newDeviceSet
             lastUpdate = Date()
@@ -248,11 +242,11 @@ extension UnifiHost
     {
         var newDeviceDetails: Set<UnifiDeviceDetail> = []
 
-        for device in self.devices
+        for device in devices
         {
             do
             {
-                var deviceDetailRequest = HTTPClientRequest(url: "https://\(host)/proxy/network/integrations/v1/sites/\(self.siteId)/devices/\(device.id)")
+                var deviceDetailRequest = HTTPClientRequest(url: "https://\(host)/proxy/network/integrations/v1/sites/\(siteId)/devices/\(device.id)")
                 deviceDetailRequest.headers.add(name: "X-API-Key", value: apiKey)
                 deviceDetailRequest.headers.add(name: "Accept", value: "application/json")
 
@@ -282,11 +276,10 @@ extension UnifiHost
                 JLog.error("Error: \(error)")
             }
         }
-        if newDeviceDetails != deviceDetails  || shouldRefresh
+        if newDeviceDetails != deviceDetails || shouldRefresh
         {
             deviceDetails = newDeviceDetails
             lastUpdate = Date()
         }
     }
-
 }
