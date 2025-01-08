@@ -7,12 +7,7 @@ import JLog
 import MQTTNIO
 import NIO
 
-public protocol SMAPublisher: Sendable
-{
-    func publish(to topic: String, payload: String, qos: MQTTQoS, retain: Bool) async throws
-}
-
-public actor MQTTPublisher: SMAPublisher
+public actor MQTTPublisher
 {
     let mqttClient: MQTTClient
     let jsonOutput: Bool
@@ -32,6 +27,10 @@ public actor MQTTPublisher: SMAPublisher
         mqttQueue.async { _ = self.mqttClient.connect() }
     }
 
+    public func publish(to topics :[String], payload: String, qos: MQTTQoS, retain: Bool) async throws
+    {
+        try await publish(to: topics.map{ $0.mqttPath }.joined(separator: "/"), payload: payload, qos: qos, retain: retain)
+    }
     public func publish(to topic: String, payload: String, qos: MQTTQoS, retain: Bool) async throws
     {
         let topic = baseTopic + "/" + topic
