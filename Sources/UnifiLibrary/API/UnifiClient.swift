@@ -7,12 +7,11 @@ import Foundation
 public struct UnifiClient: Sendable, Hashable, Equatable
 {
     public let type: UnifiClientType
-//    public let id: String
+    public let id: String
     public let name: String
     public let connectedAt: Date
     public let ipAddress: String?
-    public let macAddress: String
-//    let uplinkDeviceId: String
+    public let macAddress: String    
 
     public let lastSeen: Date? // currently not in json so it will be generated on the fly
 }
@@ -22,7 +21,7 @@ extension UnifiClient: Codable
     enum CodingKeys: String, CodingKey
     {
         case type
-//        case id
+        case id
         case name
         case connectedAt
         case ipAddress
@@ -36,7 +35,7 @@ extension UnifiClient: Codable
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         type = try container.decode(UnifiClientType.self, forKey: .type)
-//        id = try container.decode(String.self, forKey: .id)
+        id = try container.decode(String.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)
         connectedAt = try container.decode(Date.self, forKey: .connectedAt)
         ipAddress = try? container.decode(String.self, forKey: .ipAddress)

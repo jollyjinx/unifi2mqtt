@@ -35,7 +35,7 @@
     ```bash
     .build/release/unifi2mqtt
     
-    USAGE: unifi2mqtt <options>
+    USAGE: unifi2mqtt [<options>] --unifi-api-key <unifi-api-key>
 
     OPTIONS:
     --log-level <log-level> Set the log level. (values: trace, debug, info, notice, warning, error, critical; default: notice)
@@ -51,15 +51,21 @@
     -r, --refresh-interval <refresh-interval>
                           Unifi request interval. (default: 10.0)
     --publishing-options <options>
-                          Specify publishing options as a comma-separated list. (default: hostsbyip, hostsbymac, hostsbyname, hostsbynetwork)
+                          Specify publishing options as a comma-separated list. (default: devicedetailsbymac, devicesbymac, hostsbyip, hostsbymac, hostsbyname, hostsbynetwork)
         Available options: 
+        - hostsbyid: Publish hosts by their unifi id
         - hostsbyip: Publish hosts by IP address
         - hostsbyname: Publish hosts by name
         - hostsbymac: Publish hosts by MAC address
         - hostsbynetwork: Publish hosts by network
+        - devicesbyid: Publish unifi devices by their unifi id
         - devicesbyip: Publish unifi devices by IP address
         - devicesbyname: Publish unifi devices by name
         - devicesbymac: Publish unifi devices by MAC address
+        - devicedetailsbyid: Publish unifi device details by their unifi id
+        - devicedetailsbyip: Publish unifi device details by IP address
+        - devicedetailsbyname: Publish unifi device details by name
+        - devicedetailsbymac: Publish unifi device details by MAC address
     --mqtt-servername <mqtt-servername>
                           MQTT Server hostname (default: mqtt)
     --mqtt-port <mqtt-port> MQTT Server port (default: 1883)

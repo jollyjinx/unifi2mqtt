@@ -13,7 +13,7 @@ public struct UnifiDevice: Sendable, Codable, Hashable, Equatable
     public let ipAddress: String?
     public let state: UnifiDeviceState
     public let features: Set<UnfiDeviceFeatures>
-    public let interfaces: Set<UnifiDeviceInterfaces>
+    public let interfaces: Set<UnifiDeviceInterfaceType>
 }
 
 public enum UnifiDeviceState: String, Codable, Sendable
@@ -28,7 +28,7 @@ public enum UnfiDeviceFeatures: String, Codable, Sendable
     case switching
 }
 
-public enum UnifiDeviceInterfaces: String, Codable, Sendable
+public enum UnifiDeviceInterfaceType: String, Codable, Sendable
 {
     case radios
     case ports

@@ -22,27 +22,42 @@ struct PublishingOptions: CustomStringConvertible
 
 enum PublishingOption : String, CaseIterable, CustomStringConvertible
 {
+    case hostsbyid
     case hostsbyip
     case hostsbyname
     case hostsbymac
     case hostsbynetwork
 
+    case devicesbyid
     case devicesbyip
     case devicesbyname
     case devicesbymac
+
+    case devicedetailsbyid
+    case devicedetailsbyip
+    case devicedetailsbyname
+    case devicedetailsbymac
 
     var description: String { rawValue }
     var help: String {
         switch self
         {
+            case .hostsbyid:        return "Publish hosts by their unifi id"
             case .hostsbyip:        return "Publish hosts by IP address"
             case .hostsbyname:      return "Publish hosts by name"
             case .hostsbymac:       return "Publish hosts by MAC address"
             case .hostsbynetwork:   return "Publish hosts by network"
 
+            case .devicesbyid:      return "Publish unifi devices by their unifi id"
             case .devicesbyip:      return "Publish unifi devices by IP address"
             case .devicesbyname:    return "Publish unifi devices by name"
             case .devicesbymac:     return "Publish unifi devices by MAC address"
+
+            case .devicedetailsbyid:    return "Publish unifi device details by their unifi id"
+            case .devicedetailsbyip:    return "Publish unifi device details by IP address"
+            case .devicedetailsbyname:  return "Publish unifi device details by name"
+            case .devicedetailsbymac:   return "Publish unifi device details by MAC address"
+
         }
     }
 }

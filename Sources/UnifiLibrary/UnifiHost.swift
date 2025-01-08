@@ -87,20 +87,14 @@ public final class UnifiHost
     {
         while !Task.isCancelled
         {
-            do
-            {
-                try await update()
-            }
-            catch
-            {
-                JLog.error("Error: \(error)")
-            }
+            await update()
             try? await Task.sleep(nanoseconds: UInt64(refreshInterval * 1_000_000_000))
         }
     }
 
     public var clients: Set<UnifiClient> = []
     public var devices : Set<UnifiDevice> = []
+    public var deviceDetails: Set<UnifiDeviceDetail> = []
 }
 
 extension UnifiHost
@@ -124,6 +118,14 @@ extension UnifiHost
         do
         {
             try await updateDevices()
+        }
+        catch
+        {
+            JLog.error("Error: \(error)")
+        }
+        do
+        {
+            try await updateDevicesDetails()
         }
         catch
         {
@@ -175,4 +177,49 @@ extension UnifiHost
             devices = newDeviceSet
         }
     }
+
+    func updateDevicesDetails() async throws
+    {
+        var newDeviceDetails: Set<UnifiDeviceDetail> = []
+
+        for device in self.devices
+        {
+            do
+            {
+                var deviceDetailRequest = HTTPClientRequest(url: "https://\(host)/proxy/network/integrations/v1/sites/\(self.siteId)/devices/\(device.id)")
+                deviceDetailRequest.headers.add(name: "X-API-Key", value: apiKey)
+                deviceDetailRequest.headers.add(name: "Accept", value: "application/json")
+
+                let response = try await HTTPClientProvider.sharedHttpClient.execute(deviceDetailRequest, timeout: httpTimeout)
+                guard response.status == .ok else { throw Error.invalidResponse }
+                var bodyData = Data()
+                for try await buffer in response.body
+                {
+                    bodyData.append(Data(buffer: buffer))
+                }
+
+                let jsonDecoder = JSONDecoder()
+                jsonDecoder.dateDecodingStrategy = .iso8601
+
+                do
+                {
+                    let unifiDeviceDetail = try jsonDecoder.decode(UnifiDeviceDetail.self, from: bodyData)
+                    newDeviceDetails.insert(unifiDeviceDetail)
+                }
+                catch
+                {
+                    JLog.error("Error: \(error) json: \(String(data: bodyData, encoding: .utf8) ?? "nil")")
+                }
+            }
+            catch
+            {
+                JLog.error("Error: \(error)")
+            }
+        }
+        if newDeviceDetails != deviceDetails
+        {
+            deviceDetails = newDeviceDetails
+        }
+    }
+
 }
