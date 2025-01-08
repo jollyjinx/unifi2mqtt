@@ -21,6 +21,8 @@ public final class UnifiHost
 
     private let clientRequest: HTTPClientRequest
     private let deviceRequest: HTTPClientRequest
+    private let oldDeviceRequest: HTTPClientRequest
+
     private let httpTimeout: TimeAmount
 
     static func findOutDefaultSiteId(host: String, apiKey: String, timeout: TimeAmount = .seconds(5)) async throws -> String
@@ -81,6 +83,12 @@ public final class UnifiHost
         deviceRequest.headers.add(name: "X-API-Key", value: apiKey)
         deviceRequest.headers.add(name: "Accept", value: "application/json")
         self.deviceRequest = deviceRequest
+
+        var oldDeviceRequest = HTTPClientRequest(url: "https://\(host)/proxy/network/api/s/default/stat/device")
+        oldDeviceRequest.headers.add(name: "X-API-Key", value: apiKey)
+        oldDeviceRequest.headers.add(name: "Accept", value: "application/json")
+        self.oldDeviceRequest = oldDeviceRequest
+
     }
 
     public func run() async
@@ -95,6 +103,7 @@ public final class UnifiHost
     public var clients: Set<UnifiClient> = []
     public var devices : Set<UnifiDevice> = []
     public var deviceDetails: Set<UnifiDeviceDetail> = []
+    public var networks: Set<IPv4Network> = []
 }
 
 extension UnifiHost
@@ -107,6 +116,16 @@ extension UnifiHost
 
     func update() async
     {
+        do
+        {
+            try await updateNetworks()
+        }
+        catch
+        {
+            JLog.error("Error: \(error)")
+        }
+
+
         do
         {
             try await updateClients()
@@ -132,6 +151,43 @@ extension UnifiHost
             JLog.error("Error: \(error)")
         }
     }
+
+    func updateNetworks() async throws
+    {
+        // update from old device request
+        let response = try await HTTPClientProvider.sharedHttpClient.execute(oldDeviceRequest, timeout: httpTimeout)
+        guard response.status == .ok else { throw Error.invalidResponse }
+        var bodyData = Data()
+        for try await buffer in response.body
+        {
+            bodyData.append(Data(buffer: buffer))
+        }
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.dateDecodingStrategy = .iso8601
+        let deviceResponse = try jsonDecoder.decode(DeviceResponse.self, from: bodyData)
+
+        var newNetworks: Set<IPv4Network> = []
+
+        for device in deviceResponse.devices
+        {
+            guard let networks = device.reported_networks else { continue }
+            for network in networks
+            {
+                if  let address = network.address,
+                    let network = IPv4Network(address)
+                {
+                    newNetworks.insert(network)
+                }
+            }
+        }
+
+        if newNetworks != networks
+        {
+            networks = newNetworks
+        }
+    }
+
+
 
 
     func updateClients() async throws

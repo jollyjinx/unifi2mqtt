@@ -80,6 +80,8 @@ struct unifi2mqtt: AsyncParsableCommand
 
         for await _ in observationStream
         {
+            let networks = unifiHost.networks
+
             for client in unifiHost.clients
             {
                 for publishingOption in publishingOptions.options
@@ -98,7 +100,7 @@ struct unifi2mqtt: AsyncParsableCommand
                         case .hostsbymac:       try await mqttPublisher.publish(to: [publishingOption.rawValue,client.macAddress], payload: client.json, qos: .atMostOnce, retain: true)
 
                         case .hostsbynetwork:   if  let ipAddress = client.ipAddress,
-                                                    let network = client.network
+                                                    let network = networks.first(where: { $0.contains(ip: ipAddress) })?.name
                                                 {
                                                     try await mqttPublisher.publish(to: [publishingOption.rawValue,network,ipAddress], payload: client.json, qos: .atMostOnce, retain: true)
                                                 }

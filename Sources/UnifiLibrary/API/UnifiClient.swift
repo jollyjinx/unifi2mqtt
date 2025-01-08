@@ -11,7 +11,7 @@ public struct UnifiClient: Sendable, Hashable, Equatable
     public let name: String
     public let connectedAt: Date
     public let ipAddress: String?
-    public let macAddress: String    
+    public let macAddress: String
 
     public let lastSeen: Date? // currently not in json so it will be generated on the fly
 }
@@ -45,17 +45,17 @@ extension UnifiClient: Codable
     }
 }
 
-public extension UnifiClient
-{
-    var network: String?
-    {
-        if let components = ipAddress?.components(separatedBy: "."), components.count == 4
-        {
-            return components.dropLast().joined(separator: ".").appending(".0")
-        }
-        else { return nil }
-    }
-}
+//public extension UnifiClient
+//{
+//    var network: String?
+//    {
+//        if let ipAddress
+//        {
+//            return IPv4Network(ipAddress)?.name
+//        }
+//        else { return nil }
+//    }
+//}
 
 public enum UnifiClientType: String, Codable, Sendable
 {
