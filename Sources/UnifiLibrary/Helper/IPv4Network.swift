@@ -7,7 +7,7 @@ import RegexBuilder
 
 import Foundation
 
-public struct IPv4Network: Hashable
+public struct IPv4Network: Hashable, Sendable
 {
     public let name: String
     private let networkAddress: UInt32

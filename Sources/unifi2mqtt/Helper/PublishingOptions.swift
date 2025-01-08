@@ -2,10 +2,6 @@
 //  PublishingOptions.swift
 //
 
-unifi2mqtt
-//
-//  Created by Patrick Stein on 07.01.25.
-//
 import ArgumentParser
 import Foundation
 

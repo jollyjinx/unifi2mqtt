@@ -23,14 +23,28 @@
    git clone https://github.com/jollyjinx/unifi2mqtt.git
     ```
 
-2. **Build the Project:**
+1. **Build the Project (if swift is installed):**
 
+    
     ```bash
     cd unifi2mqtt
     swift build -c release
     ```
+1. **Build the Project via docker:**
+
+    ```bash
+    docker build . --file unifi2mqtt.product.dockerfile --tag unifi2mqtt
+    docker run --name unifi2mqtt unifi2mqtt --unifi-api-key <unifi-api-key> .....
+    ```
+
+1. **Run the Project with docker:**
+
+    ```bash
+    docker run --name unifi2mqtt jollyjinx/unifi2mqtt:latest unifi2mqtt --unifi-api-key <unifi-api-key> .....
+    ```
+
     
-3. **Run the Executable:**
+1. **Run the Executable:**
 
     ```bash
     .build/release/unifi2mqtt
@@ -77,8 +91,10 @@
                           Minimum Emit Interval to send updates to mqtt Server. (default: 1.0)
     -b, --basetopic <basetopic>
                           MQTT Server topic. (default: unifi/)
+    --retain                Retain messages on mqtt server
     -h, --help              Show help information.
     ```
+
 
 
 ## Further reading

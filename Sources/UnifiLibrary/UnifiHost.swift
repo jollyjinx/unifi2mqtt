@@ -10,7 +10,6 @@ import NIOCore
 import NIOFoundationCompat
 import NIOHTTP1
 
-@Observable
 @MainActor
 public final class UnifiHost
 {
@@ -18,12 +17,41 @@ public final class UnifiHost
     private let apiKey: String
     private let siteId: String
     private let refreshInterval: TimeInterval
+    private let httpTimeout: TimeAmount
 
     private let clientRequest: HTTPClientRequest
     private let deviceRequest: HTTPClientRequest
     private let oldDeviceRequest: HTTPClientRequest
 
-    private let httpTimeout: TimeAmount
+    private let networksObservable = Observable<Set<IPv4Network>>()
+    private let clientsObservable = Observable<Set<UnifiClient>>()
+    private let devicesObservable = Observable<Set<UnifiDevice>>()
+    private let deviceDetailsObservable = Observable<Set<UnifiDeviceDetail>>()
+
+    public var networks: Set<IPv4Network> = []
+    {
+        didSet { networksObservable.emit(networks) }
+    }
+
+    public var clients: Set<UnifiClient> = []
+    {
+        didSet { clientsObservable.emit(clients) }
+    }
+
+    public var devices: Set<UnifiDevice> = []
+    {
+        didSet { devicesObservable.emit(devices) }
+    }
+
+    public var deviceDetails: Set<UnifiDeviceDetail> = []
+    {
+        didSet { deviceDetailsObservable.emit(deviceDetails) }
+    }
+
+    public var lastUpdate: Date = .distantPast
+    public var maximumRefreshInterval: TimeInterval = 30.0
+
+    public var shouldRefresh: Bool { lastUpdate < Date() - maximumRefreshInterval }
 
     static func findOutDefaultSiteId(host: String, apiKey: String, timeout: TimeAmount = .seconds(5)) async throws -> String
     {
@@ -94,20 +122,36 @@ public final class UnifiHost
     {
         while !Task.isCancelled
         {
-            await update()
+            await withTaskGroup(of: Void.self)
+            { group in
+                group.addTask { do { try await self.updateNetworks() } catch { JLog.error("Error: \(error)") } }
+                group.addTask { do { try await self.updateClients() } catch { JLog.error("Error: \(error)") } }
+                group.addTask { do { try await self.updateDevices() } catch { JLog.error("Error: \(error)") } }
+                group.addTask { do { try await self.updateDevicesDetails() } catch { JLog.error("Error: \(error)") } }
+            }
             try? await Task.sleep(nanoseconds: UInt64(refreshInterval * 1_000_000_000))
         }
     }
 
-    public var clients: Set<UnifiClient> = []
-    public var devices: Set<UnifiDevice> = []
-    public var deviceDetails: Set<UnifiDeviceDetail> = []
-    public var networks: Set<IPv4Network> = []
+    public func observeNetworks() -> AsyncStream<Set<IPv4Network>>
+    {
+        networksObservable.observe()
+    }
 
-    public var lastUpdate: Date = .distantPast
-    public var maximumRefreshInterval: TimeInterval = 30.0
+    public func observeClients() -> AsyncStream<Set<UnifiClient>>
+    {
+        clientsObservable.observe()
+    }
 
-    var shouldRefresh: Bool { lastUpdate < Date() - maximumRefreshInterval }
+    public func observeDevices() -> AsyncStream<Set<UnifiDevice>>
+    {
+        devicesObservable.observe()
+    }
+
+    public func observeDeviceDetails() -> AsyncStream<Set<UnifiDeviceDetail>>
+    {
+        deviceDetailsObservable.observe()
+    }
 }
 
 extension UnifiHost
@@ -116,43 +160,6 @@ extension UnifiHost
     {
         case invalidURL
         case invalidResponse
-    }
-
-    func update() async
-    {
-        do
-        {
-            try await updateNetworks()
-        }
-        catch
-        {
-            JLog.error("Error: \(error)")
-        }
-
-        do
-        {
-            try await updateClients()
-        }
-        catch
-        {
-            JLog.error("Error: \(error)")
-        }
-        do
-        {
-            try await updateDevices()
-        }
-        catch
-        {
-            JLog.error("Error: \(error)")
-        }
-        do
-        {
-            try await updateDevicesDetails()
-        }
-        catch
-        {
-            JLog.error("Error: \(error)")
-        }
     }
 
     func updateNetworks() async throws
