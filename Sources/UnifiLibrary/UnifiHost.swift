@@ -104,6 +104,11 @@ public final class UnifiHost
     public var devices : Set<UnifiDevice> = []
     public var deviceDetails: Set<UnifiDeviceDetail> = []
     public var networks: Set<IPv4Network> = []
+
+    public var lastUpdate: Date = .distantPast
+    public var maximumRefreshInterval: TimeInterval = 30.0
+
+    var shouldRefresh : Bool { lastUpdate < Date() - maximumRefreshInterval }
 }
 
 extension UnifiHost
@@ -181,11 +186,13 @@ extension UnifiHost
             }
         }
 
-        if newNetworks != networks
+        if newNetworks != networks || shouldRefresh
         {
             networks = newNetworks
+            lastUpdate = Date()
         }
     }
+
 
 
 
@@ -206,9 +213,11 @@ extension UnifiHost
         let unifiClients = try jsonDecoder.decode(UnifiClientsResponse.self, from: bodyData)
 
         let newClientSet = Set(unifiClients.data)
-        if newClientSet != clients
+
+        if newClientSet != clients  || shouldRefresh
         {
             clients = newClientSet
+            lastUpdate = Date()
         }
     }
 
@@ -228,9 +237,10 @@ extension UnifiHost
         let unifiDevices = try jsonDecoder.decode(UnifiDevicesResponse.self, from: bodyData)
 
         let newDeviceSet = Set(unifiDevices.data)
-        if newDeviceSet != devices
+        if newDeviceSet != devices  || shouldRefresh
         {
             devices = newDeviceSet
+            lastUpdate = Date()
         }
     }
 
@@ -272,9 +282,10 @@ extension UnifiHost
                 JLog.error("Error: \(error)")
             }
         }
-        if newDeviceDetails != deviceDetails
+        if newDeviceDetails != deviceDetails  || shouldRefresh
         {
             deviceDetails = newDeviceDetails
+            lastUpdate = Date()
         }
     }
 

@@ -77,6 +77,7 @@ struct unifi2mqtt: AsyncParsableCommand
             let observer = UnifiHostObserver(unifiHost: unifiHost, continuation: continuation)
             observer.observe()
         }
+        let retain = false
 
         for await _ in observationStream
         {
@@ -88,21 +89,21 @@ struct unifi2mqtt: AsyncParsableCommand
                 {
                     switch publishingOption
                     {
-                        case .hostsbyid:        try await mqttPublisher.publish(to:[publishingOption.rawValue,client.id], payload: client.json, qos: .atMostOnce, retain: true)
+                        case .hostsbyid:        try await mqttPublisher.publish(to:[publishingOption.rawValue,client.id], payload: client.json, qos: .atMostOnce, retain : retain)
 
                         case .hostsbyip:        if let ipAddress = client.ipAddress
                                                 {
-                                                    try await mqttPublisher.publish(to: [publishingOption.rawValue,ipAddress], payload: client.json, qos: .atMostOnce, retain: true)
+                                                    try await mqttPublisher.publish(to: [publishingOption.rawValue,ipAddress], payload: client.json, qos: .atMostOnce, retain : retain)
                                                 }
 
-                        case .hostsbyname:      try await mqttPublisher.publish(to: [publishingOption.rawValue,client.name], payload: client.json, qos: .atMostOnce, retain: true)
+                        case .hostsbyname:      try await mqttPublisher.publish(to: [publishingOption.rawValue,client.name], payload: client.json, qos: .atMostOnce, retain : retain)
 
-                        case .hostsbymac:       try await mqttPublisher.publish(to: [publishingOption.rawValue,client.macAddress], payload: client.json, qos: .atMostOnce, retain: true)
+                        case .hostsbymac:       try await mqttPublisher.publish(to: [publishingOption.rawValue,client.macAddress], payload: client.json, qos: .atMostOnce, retain : retain)
 
                         case .hostsbynetwork:   if  let ipAddress = client.ipAddress,
                                                     let network = networks.first(where: { $0.contains(ip: ipAddress) })?.name
                                                 {
-                                                    try await mqttPublisher.publish(to: [publishingOption.rawValue,network,ipAddress], payload: client.json, qos: .atMostOnce, retain: true)
+                                                    try await mqttPublisher.publish(to: [publishingOption.rawValue,network,ipAddress], payload: client.json, qos: .atMostOnce, retain : retain)
                                                 }
                         default: break
                     }
@@ -114,14 +115,14 @@ struct unifi2mqtt: AsyncParsableCommand
                 {
                     switch publishingOption
                     {
-                        case .devicesbyid:      try await mqttPublisher.publish(to: [publishingOption.rawValue,device.id], payload: device.json, qos: .atMostOnce, retain: true)
+                        case .devicesbyid:      try await mqttPublisher.publish(to: [publishingOption.rawValue,device.id], payload: device.json, qos: .atMostOnce, retain : retain)
                         case .devicesbyip:      if let ipAddress = device.ipAddress
                                                 {
-                                                    try await mqttPublisher.publish(to: [publishingOption.rawValue, ipAddress], payload: device.json, qos: .atMostOnce, retain: true)
+                                                    try await mqttPublisher.publish(to: [publishingOption.rawValue, ipAddress], payload: device.json, qos: .atMostOnce, retain : retain)
                                                 }
-                        case .devicesbyname:    try await mqttPublisher.publish(to: [publishingOption.rawValue, device.name], payload: device.json, qos: .atMostOnce, retain: true)
+                        case .devicesbyname:    try await mqttPublisher.publish(to: [publishingOption.rawValue, device.name], payload: device.json, qos: .atMostOnce, retain : retain)
 
-                        case .devicesbymac:     try await mqttPublisher.publish(to: [publishingOption.rawValue, device.macAddress], payload: device.json, qos: .atMostOnce, retain: true)
+                        case .devicesbymac:     try await mqttPublisher.publish(to: [publishingOption.rawValue, device.macAddress], payload: device.json, qos: .atMostOnce, retain : retain)
 
                         default: break
                     }
@@ -133,16 +134,16 @@ struct unifi2mqtt: AsyncParsableCommand
                 {
                     switch publishingOption
                     {
-                        case .devicedetailsbyid:    try await mqttPublisher.publish(to: [publishingOption.rawValue, devicedetail.id], payload: devicedetail.json, qos: .atMostOnce, retain: true)
+                        case .devicedetailsbyid:    try await mqttPublisher.publish(to: [publishingOption.rawValue, devicedetail.id], payload: devicedetail.json, qos: .atMostOnce, retain : retain)
 
                         case .devicedetailsbyip:    if let ipAddress = devicedetail.ipAddress
                                                     {
-                                                        try await mqttPublisher.publish(to: [publishingOption.rawValue,ipAddress], payload: devicedetail.json, qos: .atMostOnce, retain: true)
+                                                        try await mqttPublisher.publish(to: [publishingOption.rawValue,ipAddress], payload: devicedetail.json, qos: .atMostOnce, retain : retain)
                                                     }
 
-                        case .devicedetailsbyname:  try await mqttPublisher.publish(to: [publishingOption.rawValue,devicedetail.name], payload: devicedetail.json, qos: .atMostOnce, retain: true)
+                        case .devicedetailsbyname:  try await mqttPublisher.publish(to: [publishingOption.rawValue,devicedetail.name], payload: devicedetail.json, qos: .atMostOnce, retain : retain)
 
-                        case .devicedetailsbymac:   try await mqttPublisher.publish(to: [publishingOption.rawValue,devicedetail.macAddress], payload: devicedetail.json, qos: .atMostOnce, retain: true)
+                        case .devicedetailsbymac:   try await mqttPublisher.publish(to: [publishingOption.rawValue,devicedetail.macAddress], payload: devicedetail.json, qos: .atMostOnce, retain : retain)
 
                         default: break
                     }
@@ -164,6 +165,7 @@ struct UnifiHostObserver: Sendable
         {
             _ = unifiHost.clients
             _ = unifiHost.devices
+            _ = unifiHost.networks
         } onChange: {
             continuation.yield(())
             Task { await observe() }

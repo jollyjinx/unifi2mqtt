@@ -29,7 +29,7 @@ public struct IPv4Network : Hashable
         self.name = IPv4Network.addressToString(address & mask.bits) + "/" + String(mask.number)
     }
 
-    func contains(ip address: String) -> Bool
+    public func contains(ip address: String) -> Bool
     {
         guard let address = IPv4Network.stringToUAddress(address) else { return false }
         return ( address & subnetMask.bits) == networkAddress
