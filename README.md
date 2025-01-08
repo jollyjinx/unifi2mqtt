@@ -78,14 +78,15 @@
     -b, --basetopic <basetopic>
                           MQTT Server topic. (default: unifi/)
     -h, --help              Show help information.
-
-
-```
+    ```
 
 
 ## Further reading
-    - https://unifi.local/unifi-api/network
-    - https://ubntwiki.com/products/software/unifi-controller/api
-    - https://developer.ui.com/site-manager-api/
-    - https://github.com/Art-of-WiFi/UniFi-API-client
+
+Some documentation and resources that might be helpful:
+
+- https://unifi.local/unifi-api/network
+- https://ubntwiki.com/products/software/unifi-controller/api
+- https://developer.ui.com/site-manager-api/
+- https://github.com/Art-of-WiFi/UniFi-API-client
 
