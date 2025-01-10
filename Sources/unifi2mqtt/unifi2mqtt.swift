@@ -37,7 +37,7 @@ struct unifi2mqtt: AsyncParsableCommand
                                             Available options: 
                                             - \(PublishingOptions.allCases.map { $0.rawValue + ": " + $0.help }.joined(separator: "\n- "))
                                             """,
-                                            valueName: "options")) var publishingOptions: PublishingOptions = .init(options: [.hostsbyip, .hostsbyname, .hostsbymac, .hostsbynetwork, .devicesbymac, .devicedetailsbymac])
+                                            valueName: "options")) var publishingOptions: PublishingOptions = .init(options: [.hostsbynetwork, .olddevicesbytype])
 
     @Option(name: .long, help: "MQTT Server hostname") var mqttHostname: String = "mqtt"
     @Option(name: .long, help: "MQTT Server port") var mqttPort: UInt16 = 1883
@@ -64,39 +64,47 @@ struct unifi2mqtt: AsyncParsableCommand
             JLog.info("Loglevel: \(logLevel)")
         }
 
-        let mqttPublisher = try await MQTTPublisher(hostname: mqttHostname, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval, baseTopic: basetopic, jsonOutput: jsonOutput)
+        let mqttPublisher = try await MQTTPublisher(hostname: mqttHostname, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval,  baseTopic: basetopic, jsonOutput: jsonOutput)
 
         let unifiHost = try await UnifiHost(host: unifiHostname, apiKey: unifiAPIKey, siteId: unifiSiteId, refreshInterval: refreshInterval)
 
         Task { await unifiHost.run() }
 
 
-        while true
+        await withTaskGroup(of: Void.self)
         {
-            await withTaskGroup(of: Void.self)
-            { group in
-                group.addTask
-                { for await clients in await unifiHost.observeClients()
-                    {
-                        try? await mqttUpdateClient(clients, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
-                    }
-                }
-                group.addTask
-                { for await devices in await unifiHost.observeDevices()
-                    {
-                        try? await mqttUpdateDevice(devices, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
-                    }
-                }
-                group.addTask
-                { for await devicedetails in await unifiHost.observeDeviceDetails()
-                    {
-                        try? await mqttUpdateDeviceDetail(devicedetails, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
-                    }
+            group in
+
+            group.addTask
+            {
+                for await oldDevices in await unifiHost.observeOldDevices()
+                {
+                    try? await mqttUpdateOldDevices(oldDevices, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
                 }
             }
-
-            try? await Task.sleep(nanoseconds: UInt64(refreshInterval * 1_000_000_000))
+            group.addTask
+            {
+                for await clients in await unifiHost.observeClients()
+                {
+                    try? await mqttUpdateClient(clients, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
+                }
+            }
+            group.addTask
+            {
+                for await devices in await unifiHost.observeDevices()
+                {
+                    try? await mqttUpdateDevice(devices, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
+                }
+            }
+            group.addTask
+            {
+                for await devicedetails in await unifiHost.observeDeviceDetails()
+                {
+                    try? await mqttUpdateDeviceDetail(devicedetails, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
+                }
+            }
         }
+        JLog.error("Exited TaskGroup - this should not happen")
     }
 
     func mqttUpdateClient(_ clients: Set<UnifiClient>, mqttPublisher: MQTTPublisher, unifiHost: UnifiHost) async throws
@@ -175,6 +183,23 @@ struct unifi2mqtt: AsyncParsableCommand
                     case .devicedetailsbyname: try await mqttPublisher.publish(to: [publishingOption.rawValue, devicedetail.name], payload: devicedetail.json, qos: .atMostOnce, retain: retain)
 
                     case .devicedetailsbymac: try await mqttPublisher.publish(to: [publishingOption.rawValue, devicedetail.macAddress], payload: devicedetail.json, qos: .atMostOnce, retain: retain)
+
+                    default: break
+                }
+            }
+        }
+    }
+
+    func mqttUpdateOldDevices(_ oldDevices: Set<Device>, mqttPublisher: MQTTPublisher, unifiHost: UnifiHost) async throws
+    {
+        for device in oldDevices
+        {
+            for publishingOption in publishingOptions.options
+            {
+                switch publishingOption
+                {
+                    case .olddevicesbytype: let path:[String] = [publishingOption.rawValue, device.type.description, device.name]
+                                            try await mqttPublisher.publish(to: path , payload: device.json, qos: .atMostOnce, retain: retain)
 
                     default: break
                 }

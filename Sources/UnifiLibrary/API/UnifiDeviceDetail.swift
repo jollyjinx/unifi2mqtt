@@ -4,7 +4,7 @@
 
 import Foundation
 
-public struct UnifiDeviceDetail: Sendable, Codable, Hashable, Equatable
+public struct UnifiDeviceDetail: Sendable, Codable
 {
     public let id: String
     public let name: String
@@ -19,6 +19,17 @@ public struct UnifiDeviceDetail: Sendable, Codable, Hashable, Equatable
     public let uplink: [String: String]?
     public let features: [String: [String: String]]
     public let interfaces: UnifiDeviceInterfaceDetails
+}
+
+extension UnifiDeviceDetail: Hashable, Equatable
+{
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(macAddress)
+    }
+
+    public static func == (lhs: UnifiDeviceDetail, rhs: UnifiDeviceDetail) -> Bool {
+        return lhs.macAddress == rhs.macAddress
+    }
 }
 
 public struct UnifiDeviceInterfaceDetails: Sendable, Codable, Hashable, Equatable

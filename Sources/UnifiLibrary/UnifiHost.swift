@@ -23,14 +23,14 @@ public final class UnifiHost
     private let deviceRequest: HTTPClientRequest
     private let oldDeviceRequest: HTTPClientRequest
 
-    private let networksObservable = Observable<Set<IPv4Network>>()
+    private let oldDevicesObservable = Observable<Set<Device>>()
     private let clientsObservable = Observable<Set<UnifiClient>>()
     private let devicesObservable = Observable<Set<UnifiDevice>>()
     private let deviceDetailsObservable = Observable<Set<UnifiDeviceDetail>>()
 
-    public var networks: Set<IPv4Network> = []
+    public var oldDevices: Set<Device> = []
     {
-        didSet { networksObservable.emit(networks) }
+        didSet { oldDevicesObservable.emit(oldDevices) }
     }
 
     public var clients: Set<UnifiClient> = []
@@ -48,10 +48,17 @@ public final class UnifiHost
         didSet { deviceDetailsObservable.emit(deviceDetails) }
     }
 
-    public var lastUpdate: Date = .distantPast
+    public var lastUpdateOldDevices: Date = .distantPast
+    public var lastUpdateClients: Date = .distantPast
+    public var lastUpdateDevices: Date = .distantPast
+    public var lastUpdateDeviceDetails: Date = .distantPast
+
     public var maximumRefreshInterval: TimeInterval = 30.0
 
-    public var shouldRefresh: Bool { lastUpdate < Date() - maximumRefreshInterval }
+    public var shouldRefreshOldDevices: Bool    { lastUpdateOldDevices < Date() - maximumRefreshInterval }
+    public var shouldRefreshClients: Bool       { lastUpdateClients < Date() - maximumRefreshInterval }
+    public var shouldRefreshDevices: Bool       { lastUpdateDevices < Date() - maximumRefreshInterval }
+    public var shouldRefreshDevicedetails: Bool { lastUpdateDeviceDetails < Date() - maximumRefreshInterval }
 
     static func findOutDefaultSiteId(host: String, apiKey: String, timeout: TimeAmount = .seconds(5)) async throws -> String
     {
@@ -122,20 +129,25 @@ public final class UnifiHost
     {
         while !Task.isCancelled
         {
-            await withTaskGroup(of: Void.self)
-            { group in
-                group.addTask { do { try await self.updateNetworks() } catch { JLog.error("Error: \(error)") } }
-                group.addTask { do { try await self.updateClients() } catch { JLog.error("Error: \(error)") } }
-                group.addTask { do { try await self.updateDevices() } catch { JLog.error("Error: \(error)") } }
-                group.addTask { do { try await self.updateDevicesDetails() } catch { JLog.error("Error: \(error)") } }
-            }
-            try? await Task.sleep(nanoseconds: UInt64(refreshInterval * 1_000_000_000))
+            try? await withThrowingTimeout(seconds: refreshInterval, body:
+            {
+                await withTaskGroup(of: Void.self)
+                {   group in
+
+                    group.addTask { do { try await self.updateOldDevices() } catch { JLog.error("Error: \(error)") } }
+                    group.addTask { do { try await self.updateClients() } catch { JLog.error("Error: \(error)") } }
+                    group.addTask { do { try await self.updateDevices() } catch { JLog.error("Error: \(error)") } }
+                    group.addTask { do { try await self.updateDevicesDetails() } catch { JLog.error("Error: \(error)") } }
+                    group.addTask { try? await Task.sleep(nanoseconds: UInt64(self.refreshInterval * 1_000_000_000)) }
+                }
+            })
+            JLog.debug("Refreshed:\(Date()) refreshInterval:\(refreshInterval)")
         }
     }
 
-    public func observeNetworks() -> AsyncStream<Set<IPv4Network>>
+    public func observeOldDevices() -> AsyncStream<Set<Device>>
     {
-        networksObservable.observe()
+        oldDevicesObservable.observe()
     }
 
     public func observeClients() -> AsyncStream<Set<UnifiClient>>
@@ -162,7 +174,7 @@ extension UnifiHost
         case invalidResponse
     }
 
-    func updateNetworks() async throws
+    func updateOldDevices() async throws
     {
         // update from old device request
         let response = try await HTTPClientProvider.sharedHttpClient.execute(oldDeviceRequest, timeout: httpTimeout)
@@ -172,31 +184,27 @@ extension UnifiHost
         {
             bodyData.append(Data(buffer: buffer))
         }
+        JLog.trace("Got Old Devices: \(String(data: bodyData, encoding: .utf8) ?? "nil")")
+
         let jsonDecoder = JSONDecoder()
-        jsonDecoder.dateDecodingStrategy = .iso8601
+        jsonDecoder.dateDecodingStrategy = .secondsSince1970
         let deviceResponse = try jsonDecoder.decode(DeviceResponse.self, from: bodyData)
 
-        var newNetworks: Set<IPv4Network> = []
 
-        for device in deviceResponse.devices
-        {
-            guard let networks = device.reported_networks else { continue }
-            for network in networks
-            {
-                if let address = network.address,
-                   let network = IPv4Network(address)
-                {
-                    newNetworks.insert(network)
-                }
-            }
-        }
+        let newDevicesResponse = Set(deviceResponse.devices)
 
-        if newNetworks != networks || shouldRefresh
+        if newDevicesResponse != oldDevices || shouldRefreshOldDevices
         {
-            networks = newNetworks
-            lastUpdate = Date()
+            oldDevices = newDevicesResponse
+            lastUpdateOldDevices = Date()
         }
     }
+
+    public var networks : Set<IPv4Network>
+    {
+        Set(oldDevices.compactMap { $0.networks }.joined())
+    }
+
 
     func updateClients() async throws
     {
@@ -207,6 +215,7 @@ extension UnifiHost
         {
             bodyData.append(Data(buffer: buffer))
         }
+        JLog.trace("Got clients: \(String(data: bodyData, encoding: .utf8) ?? "nil")")
 
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .iso8601
@@ -215,10 +224,10 @@ extension UnifiHost
 
         let newClientSet = Set(unifiClients.data)
 
-        if newClientSet != clients || shouldRefresh
+        if newClientSet != clients || shouldRefreshClients
         {
             clients = newClientSet
-            lastUpdate = Date()
+            lastUpdateClients = Date()
         }
     }
 
@@ -231,6 +240,7 @@ extension UnifiHost
         {
             bodyData.append(Data(buffer: buffer))
         }
+        JLog.trace("Got Devices: \(String(data: bodyData, encoding: .utf8) ?? "nil")")
 
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .iso8601
@@ -238,10 +248,10 @@ extension UnifiHost
         let unifiDevices = try jsonDecoder.decode(UnifiDevicesResponse.self, from: bodyData)
 
         let newDeviceSet = Set(unifiDevices.data)
-        if newDeviceSet != devices || shouldRefresh
+        if newDeviceSet != devices || shouldRefreshDevices
         {
             devices = newDeviceSet
-            lastUpdate = Date()
+            lastUpdateDevices = Date()
         }
     }
 
@@ -264,6 +274,7 @@ extension UnifiHost
                 {
                     bodyData.append(Data(buffer: buffer))
                 }
+                JLog.trace("Got Devicedetails: \(String(data: bodyData, encoding: .utf8) ?? "nil")")
 
                 let jsonDecoder = JSONDecoder()
                 jsonDecoder.dateDecodingStrategy = .iso8601
@@ -283,10 +294,10 @@ extension UnifiHost
                 JLog.error("Error: \(error)")
             }
         }
-        if newDeviceDetails != deviceDetails || shouldRefresh
+        if newDeviceDetails != deviceDetails || shouldRefreshDevicedetails
         {
             deviceDetails = newDeviceDetails
-            lastUpdate = Date()
+            lastUpdateDeviceDetails = Date()
         }
     }
 }

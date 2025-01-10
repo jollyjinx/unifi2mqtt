@@ -11,14 +11,16 @@ public actor MQTTPublisher
 {
     let mqttClient: MQTTClient
     let jsonOutput: Bool
+    let refreshInterval: Double
     let emitInterval: Double
     let baseTopic: String
     let mqttQueue = DispatchQueue(label: "mqttQueue")
     var lasttimeused = [String: Date]()
 
-    public init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, baseTopic: String = "", jsonOutput: Bool = false) async throws
+    public init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, refreshInterval: Double = 60.0, baseTopic: String = "", jsonOutput: Bool = false) async throws
     {
         self.emitInterval = emitInterval
+        self.refreshInterval = refreshInterval
         self.jsonOutput = jsonOutput
         self.baseTopic = baseTopic.hasSuffix("/") ? String(baseTopic.dropLast(1)) : baseTopic
 
@@ -29,7 +31,9 @@ public actor MQTTPublisher
 
     public func publish(to topics: [String], payload: String, qos: MQTTQoS, retain: Bool) async throws
     {
-        try await publish(to: topics.map(\.mqttPath).joined(separator: "/"), payload: payload, qos: qos, retain: retain)
+        let topic = topics.map(\.mqttPath).joined(separator: "/")
+        
+        try await publish(to: topic, payload: payload, qos: qos, retain: retain)
     }
 
     public func publish(to topic: String, payload: String, qos: MQTTQoS, retain: Bool) async throws

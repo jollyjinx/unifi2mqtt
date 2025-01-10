@@ -4,7 +4,7 @@
 
 import Foundation
 
-public struct UnifiClient: Sendable, Hashable, Equatable
+public struct UnifiClient: Sendable
 {
     public let type: UnifiClientType
     public let id: String
@@ -13,7 +13,18 @@ public struct UnifiClient: Sendable, Hashable, Equatable
     public let ipAddress: String?
     public let macAddress: String
 
-//    public let lastSeen: Date? // currently not in json so it will be generated on the fly
+    public let lastSeen: Date? // currently not in json so it will be generated on the fly
+}
+
+extension UnifiClient: Hashable, Equatable
+{
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(macAddress)
+    }
+
+    public static func == (lhs: UnifiClient, rhs: UnifiClient) -> Bool {
+        return lhs.macAddress == rhs.macAddress
+    }
 }
 
 extension UnifiClient: Codable
@@ -27,7 +38,7 @@ extension UnifiClient: Codable
         case ipAddress
         case macAddress
 
-//        case lastSeen
+        case lastSeen
     }
 
     public init(from decoder: Decoder) throws
@@ -41,8 +52,9 @@ extension UnifiClient: Codable
         ipAddress = try? container.decode(String.self, forKey: .ipAddress)
         macAddress = try container.decode(String.self, forKey: .macAddress)
 
-//        lastSeen = (try? container.decode(Date.self, forKey: .lastSeen)) ?? Date()
+        lastSeen = (try? container.decode(Date.self, forKey: .lastSeen)) ?? Date()
     }
+
 }
 
 // public extension UnifiClient

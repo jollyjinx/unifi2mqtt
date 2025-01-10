@@ -36,6 +36,8 @@ enum PublishingOption: String, CaseIterable, CustomStringConvertible
     case devicedetailsbyname
     case devicedetailsbymac
 
+    case olddevicesbytype
+    
     var description: String { rawValue }
     var help: String
     {
@@ -54,6 +56,7 @@ enum PublishingOption: String, CaseIterable, CustomStringConvertible
             case .devicedetailsbyip: return "Publish unifi device details by IP address"
             case .devicedetailsbyname: return "Publish unifi device details by name"
             case .devicedetailsbymac: return "Publish unifi device details by MAC address"
+            case .olddevicesbytype: return "Publish old unifi device details by type"
         }
     }
 }
