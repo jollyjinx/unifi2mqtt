@@ -79,6 +79,7 @@ extension PublishingOptions: ExpressibleByArgument
             {
                 options.options.insert(option)
             }
+            else { return nil }
         }
         self = options
     }
