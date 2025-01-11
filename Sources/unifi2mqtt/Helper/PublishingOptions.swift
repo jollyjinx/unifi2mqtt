@@ -37,7 +37,7 @@ enum PublishingOption: String, CaseIterable, CustomStringConvertible
     case devicedetailsbymac
 
     case olddevicesbytype
-    
+
     var description: String { rawValue }
     var help: String
     {

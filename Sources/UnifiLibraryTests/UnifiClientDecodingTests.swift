@@ -1,4 +1,8 @@
 //
+//  UnifiClientDecodingTests.swift
+//
+
+//
 //  ClientDecodingTests.swift
 //  unifi2mqtt
 //
@@ -9,11 +13,12 @@ import Testing
 
 @testable import UnifiLibrary
 
-struct UnifiClientDecodingTests {
+struct UnifiClientDecodingTests
+{
     @Test
     func normalUnifiClientsResponse() throws
     {
-        let unifiedClientsResponseURL = Bundle.module.url(forResource: "UnifiClientsResponse.normal", withExtension: "json", subdirectory:"Resources")!
+        let unifiedClientsResponseURL = Bundle.module.url(forResource: "UnifiClientsResponse.normal", withExtension: "json", subdirectory: "Resources")!
         let data = try Data(contentsOf: unifiedClientsResponseURL)
 
         let decoder = JSONDecoder()
@@ -26,7 +31,7 @@ struct UnifiClientDecodingTests {
     @Test
     func brokenUnifiClientsResponse() throws
     {
-        let unifiedClientsResponseURL = Bundle.module.url(forResource: "UnifiClientsResponse.broken", withExtension: "json", subdirectory:"Resources")!
+        let unifiedClientsResponseURL = Bundle.module.url(forResource: "UnifiClientsResponse.broken", withExtension: "json", subdirectory: "Resources")!
         let data = try Data(contentsOf: unifiedClientsResponseURL)
 
         let decoder = JSONDecoder()

@@ -19,27 +19,14 @@ public struct UnifiClient: Sendable
 
 extension UnifiClient: Hashable, Equatable
 {
-    public func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher)
+    {
         hasher.combine(macAddress)
     }
 
-    public static func == (lhs: UnifiClient, rhs: UnifiClient) -> Bool {
+    public static func == (lhs: UnifiClient, rhs: UnifiClient) -> Bool
+    {
         return lhs.macAddress == rhs.macAddress
-    }
-}
-
-public struct OptionalUnifiClient: Decodable, Sendable
-{
-    public let unifiClient: UnifiClient?
-
-    public init(from decoder: Decoder) throws {
-        do {
-            self.unifiClient = try UnifiClient(from: decoder)
-        } catch {
-            self.unifiClient = nil
-            // Log the decoding error
-            print("Error decoding UnifiClient: \(error)")
-        }
     }
 }
 
@@ -47,24 +34,16 @@ extension UnifiClient: Codable
 {
     public init(from decoder: Decoder) throws
     {
-        do
-        {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
+        let container = try decoder.container(keyedBy: CodingKeys.self)
 
-            type = try container.decode(UnifiClientType.self, forKey: .type)
-            id = try container.decode(String.self, forKey: .id)
-            name = try container.decode(String.self, forKey: .name)
-            connectedAt = try container.decode(Date.self, forKey: .connectedAt)
-            ipAddress = try? container.decode(String.self, forKey: .ipAddress)
-            macAddress = try container.decode(String.self, forKey: .macAddress)
+        type = try container.decode(UnifiClientType.self, forKey: .type)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        connectedAt = try container.decode(Date.self, forKey: .connectedAt)
+        ipAddress = try? container.decode(String.self, forKey: .ipAddress)
+        macAddress = try container.decode(String.self, forKey: .macAddress)
 
-            lastSeen = (try? container.decode(Date.self, forKey: .lastSeen)) ?? Date()
-        }
-        catch
-        {
-            JLog.error("Error decoding UnifiClient: \( error)")
-            throw error
-        }
+        lastSeen = (try? container.decode(Date.self, forKey: .lastSeen)) ?? Date()
     }
 }
 
@@ -79,11 +58,3 @@ extension UnifiClient: Codable
 //        else { return nil }
 //    }
 // }
-
-public enum UnifiClientType: String, Codable, Sendable
-{
-    case wired = "WIRED"
-    case wireless = "WIRELESS"
-    case vpn = "VPN"
-    case teleport = "TELEPORT"
-}

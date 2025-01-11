@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import JLog
 
 public struct UnifiDevice: Sendable, Codable
 {
@@ -15,29 +16,16 @@ public struct UnifiDevice: Sendable, Codable
     public let features: Set<UnfiDeviceFeatures>
     public let interfaces: Set<UnifiDeviceInterfaceType>
 }
+
 extension UnifiDevice: Hashable, Equatable
 {
-    public func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher)
+    {
         hasher.combine(macAddress)
     }
 
-    public static func == (lhs: UnifiDevice, rhs: UnifiDevice) -> Bool {
+    public static func == (lhs: UnifiDevice, rhs: UnifiDevice) -> Bool
+    {
         return lhs.macAddress == rhs.macAddress
     }
 }
-
-struct OptionalUnifiDevice: Decodable, Sendable
-{
-    public let unifiDevice: UnifiDevice?
-
-    public init(from decoder: Decoder) throws {
-        do {
-            self.unifiDevice = try UnifiDevice(from: decoder)
-        } catch {
-            self.unifiDevice = nil
-            print("Error decoding UnifiDevice: \(error)")
-        }
-    }
-}
-
-

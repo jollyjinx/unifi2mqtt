@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import JLog
 
 public struct UnifiDevicesResponse: Sendable, Hashable, Equatable
 {
@@ -13,10 +14,10 @@ public struct UnifiDevicesResponse: Sendable, Hashable, Equatable
     public let data: [UnifiDevice]
 }
 
-
 extension UnifiDevicesResponse: Codable
 {
-    public enum CodingKeys: CodingKey {
+    public enum CodingKeys: CodingKey
+    {
         case offset
         case limit
         case count
@@ -28,12 +29,39 @@ extension UnifiDevicesResponse: Codable
     {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        self.offset = try container.decode(Int.self, forKey: .offset)
-        self.limit = try container.decode(Int.self, forKey: .limit)
-        self.count = try container.decode(Int.self, forKey: .count)
-        self.totalCount = try container.decode(Int.self, forKey: .totalCount)
+        offset = try container.decode(Int.self, forKey: .offset)
+        limit = try container.decode(Int.self, forKey: .limit)
+        count = try container.decode(Int.self, forKey: .count)
+        totalCount = try container.decode(Int.self, forKey: .totalCount)
 
         let rawData = try container.decode([OptionalUnifiDevice].self, forKey: .data)
-        self.data = rawData.compactMap { $0.unifiDevice }
+        data = rawData.compactMap(\.unifiDevice)
+    }
+}
+
+private struct OptionalUnifiDevice: Decodable, Sendable
+{
+    public let unifiDevice: UnifiDevice?
+
+    public init(from decoder: Decoder) throws
+    {
+        do
+        {
+            unifiDevice = try UnifiDevice(from: decoder)
+        }
+        catch
+        {
+            unifiDevice = nil
+
+            if let debugData = try? JSONSerialization.data(withJSONObject: decoder.userInfo, options: .prettyPrinted),
+               let jsonString = String(data: debugData, encoding: .utf8)
+            {
+                JLog.error("Error decoding UnifiDevice. Decoding context: \(jsonString)")
+            }
+            else
+            {
+                JLog.error("Error decoding UnifiDevice: \(error)")
+            }
+        }
     }
 }

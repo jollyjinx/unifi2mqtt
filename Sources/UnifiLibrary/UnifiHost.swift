@@ -55,9 +55,9 @@ public final class UnifiHost
 
     public var maximumRefreshInterval: TimeInterval = 30.0
 
-    public var shouldRefreshOldDevices: Bool    { lastUpdateOldDevices < Date() - maximumRefreshInterval }
-    public var shouldRefreshClients: Bool       { lastUpdateClients < Date() - maximumRefreshInterval }
-    public var shouldRefreshDevices: Bool       { lastUpdateDevices < Date() - maximumRefreshInterval }
+    public var shouldRefreshOldDevices: Bool { lastUpdateOldDevices < Date() - maximumRefreshInterval }
+    public var shouldRefreshClients: Bool { lastUpdateClients < Date() - maximumRefreshInterval }
+    public var shouldRefreshDevices: Bool { lastUpdateDevices < Date() - maximumRefreshInterval }
     public var shouldRefreshDevicedetails: Bool { lastUpdateDeviceDetails < Date() - maximumRefreshInterval }
 
     static func findOutDefaultSiteId(host: String, apiKey: String, timeout: TimeAmount = .seconds(5)) async throws -> String
@@ -130,17 +130,17 @@ public final class UnifiHost
         while !Task.isCancelled
         {
             try? await withThrowingTimeout(seconds: refreshInterval, body:
-            {
-                await withTaskGroup(of: Void.self)
-                {   group in
+                {
+                    await withTaskGroup(of: Void.self)
+                    { group in
 
-                    group.addTask { do { try await self.updateOldDevices() } catch { JLog.error("Error: \(error)") } }
-                    group.addTask { do { try await self.updateClients() } catch { JLog.error("Error: \(error)") } }
-                    group.addTask { do { try await self.updateDevices() } catch { JLog.error("Error: \(error)") } }
-                    group.addTask { do { try await self.updateDevicesDetails() } catch { JLog.error("Error: \(error)") } }
-                    group.addTask { try? await Task.sleep(nanoseconds: UInt64(self.refreshInterval * 1_000_000_000)) }
-                }
-            })
+                        group.addTask { do { try await self.updateOldDevices() } catch { JLog.error("Error: \(error)") } }
+                        group.addTask { do { try await self.updateClients() } catch { JLog.error("Error: \(error)") } }
+                        group.addTask { do { try await self.updateDevices() } catch { JLog.error("Error: \(error)") } }
+                        group.addTask { do { try await self.updateDevicesDetails() } catch { JLog.error("Error: \(error)") } }
+                        group.addTask { try? await Task.sleep(nanoseconds: UInt64(self.refreshInterval * 1_000_000_000)) }
+                    }
+                })
             JLog.debug("Refreshed:\(Date()) refreshInterval:\(refreshInterval)")
         }
     }
@@ -190,7 +190,6 @@ extension UnifiHost
         jsonDecoder.dateDecodingStrategy = .secondsSince1970
         let deviceResponse = try jsonDecoder.decode(DeviceResponse.self, from: bodyData)
 
-
         let newDevicesResponse = Set(deviceResponse.devices)
 
         if newDevicesResponse != oldDevices || shouldRefreshOldDevices
@@ -200,11 +199,10 @@ extension UnifiHost
         }
     }
 
-    public var networks : Set<IPv4Network>
+    public var networks: Set<IPv4Network>
     {
-        Set(oldDevices.compactMap { $0.networks }.joined())
+        Set(oldDevices.compactMap(\.networks).joined())
     }
-
 
     func updateClients() async throws
     {

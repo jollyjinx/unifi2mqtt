@@ -23,11 +23,13 @@ public struct UnifiDeviceDetail: Sendable, Codable
 
 extension UnifiDeviceDetail: Hashable, Equatable
 {
-    public func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher)
+    {
         hasher.combine(macAddress)
     }
 
-    public static func == (lhs: UnifiDeviceDetail, rhs: UnifiDeviceDetail) -> Bool {
+    public static func == (lhs: UnifiDeviceDetail, rhs: UnifiDeviceDetail) -> Bool
+    {
         return lhs.macAddress == rhs.macAddress
     }
 }
@@ -37,5 +39,3 @@ public struct UnifiDeviceInterfaceDetails: Sendable, Codable, Hashable, Equatabl
     public let radios: [UnifiDeviceRadioDetail]?
     public let ports: [UnifiDevicePortDetail]?
 }
-
-

@@ -4,7 +4,7 @@
 
 import Foundation
 
-public enum UnifiDeviceState:  Sendable, Hashable
+public enum UnifiDeviceState: Sendable, Hashable
 {
     case online
     case offline
@@ -17,7 +17,6 @@ public enum UnifiDeviceState:  Sendable, Hashable
     case isolated
     case unknownKey(String)
 }
-
 
 extension UnifiDeviceState: CustomStringConvertible
 {
@@ -34,12 +33,12 @@ extension UnifiDeviceState: CustomStringConvertible
             case .deleting: return "DELETING"
             case .connectionInterrupted: return "CONNECTION_INTERRUPTED"
             case .isolated: return "ISOLATED"
-            case .unknownKey(let key): return key
+            case let .unknownKey(key): return key
         }
     }
 }
 
-extension UnifiDeviceState : Codable
+extension UnifiDeviceState: Codable
 {
     enum CodingKeys: String, CodingKey
     {
@@ -69,7 +68,7 @@ extension UnifiDeviceState : Codable
             case .deleting: try container.encode("DELETING")
             case .connectionInterrupted: try container.encode("CONNECTION_INTERRUPTED")
             case .isolated: try container.encode("ISOLATED")
-            case .unknownKey(let key): try container.encode(key)
+            case let .unknownKey(key): try container.encode(key)
         }
     }
 
@@ -92,4 +91,3 @@ extension UnifiDeviceState : Codable
         }
     }
 }
-

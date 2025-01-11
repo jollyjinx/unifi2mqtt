@@ -20,33 +20,32 @@ public struct Device: Codable, Sendable
 
 extension Device: Hashable, Equatable
 {
-    public func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher)
+    {
         hasher.combine(mac)
     }
 
-    public static func == (lhs: Device, rhs: Device) -> Bool {
+    public static func == (lhs: Device, rhs: Device) -> Bool
+    {
         return lhs.mac == rhs.mac
     }
 }
-
 
 extension Device
 {
     var networks: Set<IPv4Network>
     {
-        let networks:[IPv4Network] = reported_networks?.compactMap
-                                {
-                                    guard let address = $0.address else { return nil }
-                                    return IPv4Network(address)
-                                } ?? []
+        let networks: [IPv4Network] = reported_networks?.compactMap
+        {
+            guard let address = $0.address else { return nil }
+            return IPv4Network(address)
+        } ?? []
         return Set(networks)
     }
 }
-
 
 public struct ReportedNetwork: Codable, Sendable, Hashable, Equatable
 {
     public let name: String
     public let address: String?
 }
-

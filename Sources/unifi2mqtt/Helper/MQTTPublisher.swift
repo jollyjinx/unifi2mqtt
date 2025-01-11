@@ -32,7 +32,7 @@ public actor MQTTPublisher
     public func publish(to topics: [String], payload: String, qos: MQTTQoS, retain: Bool) async throws
     {
         let topic = topics.map(\.mqttPath).joined(separator: "/")
-        
+
         try await publish(to: topic, payload: payload, qos: qos, retain: retain)
     }
 

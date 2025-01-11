@@ -1,6 +1,7 @@
 //
 //  DeviceType.swift
 //
+
 import Foundation
 import JLog
 

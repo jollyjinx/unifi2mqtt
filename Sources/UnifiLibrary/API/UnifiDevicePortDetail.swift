@@ -1,10 +1,6 @@
 //
 //  UnifiDevicePortDetail.swift
-//  unifi2mqtt
 //
-//  Created by Patrick Stein on 11.01.25.
-//
-
 
 public struct UnifiDevicePortDetail: Sendable, Codable, Hashable, Equatable
 {

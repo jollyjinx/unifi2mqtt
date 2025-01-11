@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import JLog
 
 public struct UnifiClientsResponse: Sendable, Hashable, Equatable
 {
@@ -13,10 +14,9 @@ public struct UnifiClientsResponse: Sendable, Hashable, Equatable
     public let data: [UnifiClient]
 }
 
-
-extension UnifiClientsResponse : Codable
+extension UnifiClientsResponse: Codable
 {
-    enum CodingKeys : String, CodingKey
+    enum CodingKeys: String, CodingKey
     {
         case offset
         case limit
@@ -25,14 +25,42 @@ extension UnifiClientsResponse : Codable
         case data
     }
 
-    public init(from decoder: any Decoder) throws {
+    public init(from decoder: any Decoder) throws
+    {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.offset = try container.decode(Int.self, forKey: .offset)
-        self.limit = try container.decode(Int.self, forKey: .limit)
-        self.count = try container.decode(Int.self, forKey: .count)
-        self.totalCount = try container.decode(Int.self, forKey: .totalCount)
+        offset = try container.decode(Int.self, forKey: .offset)
+        limit = try container.decode(Int.self, forKey: .limit)
+        count = try container.decode(Int.self, forKey: .count)
+        totalCount = try container.decode(Int.self, forKey: .totalCount)
 
         let rawData = try container.decode([OptionalUnifiClient].self, forKey: .data)
-        self.data = rawData.compactMap { $0.unifiClient } // Filter out nil clients
+        data = rawData.compactMap(\.unifiClient) // Filter out nil clients
+    }
+}
+
+private struct OptionalUnifiClient: Decodable, Sendable
+{
+    public let unifiClient: UnifiClient?
+
+    public init(from decoder: Decoder) throws
+    {
+        do
+        {
+            unifiClient = try UnifiClient(from: decoder)
+        }
+        catch
+        {
+            unifiClient = nil
+
+            if let debugData = try? JSONSerialization.data(withJSONObject: decoder.userInfo, options: .prettyPrinted),
+               let jsonString = String(data: debugData, encoding: .utf8)
+            {
+                JLog.error("Error decoding UnifiClient. Decoding context: \(jsonString)")
+            }
+            else
+            {
+                JLog.error("Error decoding UnifiClient: \(error)")
+            }
+        }
     }
 }

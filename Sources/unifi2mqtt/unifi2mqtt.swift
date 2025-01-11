@@ -64,12 +64,11 @@ struct unifi2mqtt: AsyncParsableCommand
             JLog.info("Loglevel: \(logLevel)")
         }
 
-        let mqttPublisher = try await MQTTPublisher(hostname: mqttHostname, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval,  baseTopic: basetopic, jsonOutput: jsonOutput)
+        let mqttPublisher = try await MQTTPublisher(hostname: mqttHostname, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval, baseTopic: basetopic, jsonOutput: jsonOutput)
 
         let unifiHost = try await UnifiHost(host: unifiHostname, apiKey: unifiAPIKey, siteId: unifiSiteId, refreshInterval: refreshInterval)
 
         Task { await unifiHost.run() }
-
 
         await withTaskGroup(of: Void.self)
         {
@@ -140,7 +139,7 @@ struct unifi2mqtt: AsyncParsableCommand
         }
     }
 
-    func mqttUpdateDevice(_ devices: Set<UnifiDevice>, mqttPublisher: MQTTPublisher, unifiHost: UnifiHost) async throws
+    func mqttUpdateDevice(_ devices: Set<UnifiDevice>, mqttPublisher: MQTTPublisher, unifiHost _: UnifiHost) async throws
     {
         for device in devices
         {
@@ -165,7 +164,7 @@ struct unifi2mqtt: AsyncParsableCommand
         }
     }
 
-    func mqttUpdateDeviceDetail(_ devicedetails: Set<UnifiDeviceDetail>, mqttPublisher: MQTTPublisher, unifiHost: UnifiHost) async throws
+    func mqttUpdateDeviceDetail(_ devicedetails: Set<UnifiDeviceDetail>, mqttPublisher: MQTTPublisher, unifiHost _: UnifiHost) async throws
     {
         for devicedetail in devicedetails
         {
@@ -190,7 +189,7 @@ struct unifi2mqtt: AsyncParsableCommand
         }
     }
 
-    func mqttUpdateOldDevices(_ oldDevices: Set<Device>, mqttPublisher: MQTTPublisher, unifiHost: UnifiHost) async throws
+    func mqttUpdateOldDevices(_ oldDevices: Set<Device>, mqttPublisher: MQTTPublisher, unifiHost _: UnifiHost) async throws
     {
         for device in oldDevices
         {
@@ -198,8 +197,8 @@ struct unifi2mqtt: AsyncParsableCommand
             {
                 switch publishingOption
                 {
-                    case .olddevicesbytype: let path:[String] = [publishingOption.rawValue, device.type.description, device.name]
-                                            try await mqttPublisher.publish(to: path , payload: device.json, qos: .atMostOnce, retain: retain)
+                    case .olddevicesbytype: let path: [String] = [publishingOption.rawValue, device.type.description, device.name]
+                        try await mqttPublisher.publish(to: path, payload: device.json, qos: .atMostOnce, retain: retain)
 
                     default: break
                 }
