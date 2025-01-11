@@ -28,9 +28,9 @@ struct unifi2mqtt: AsyncParsableCommand
     @Option(name: .long, help: "Unifi site id") var unifiSiteId: String? = nil
 
     #if DEBUG
-        @Option(name: .shortAndLong, help: "Unifi request interval.") var refreshInterval: Double = 1.0
+        @Option(name: .shortAndLong, help: "Unifi request interval.") var requestInterval: Double = 5.0
     #else
-        @Option(name: .shortAndLong, help: "Unifi request interval.") var refreshInterval: Double = 10.0
+        @Option(name: .shortAndLong, help: "Unifi request interval.") var requestInterval: Double = 15.0
     #endif
     @Option(name: .long, help: ArgumentHelp("Specify publishing options as a comma-separated list.",
                                             discussion: """
@@ -43,7 +43,9 @@ struct unifi2mqtt: AsyncParsableCommand
     @Option(name: .long, help: "MQTT Server port") var mqttPort: UInt16 = 1883
     @Option(name: .long, help: "MQTT Server username") var mqttUsername: String = "mqtt"
     @Option(name: .long, help: "MQTT Server password") var mqttPassword: String = ""
-    @Option(name: .shortAndLong, help: "Minimum Emit Interval to send updates to mqtt Server.") var emitInterval: Double = 1.0
+    @Option(name: .long, help: "Minimum Emit Interval to send updates to mqtt Server.") var minimumEmitInterval: Double = 1.0
+    @Option(name: .long, help: "Maximum Emit Interval to send updates to mqtt Server.") var maximumEmitInterval: Double = 60.0
+
     #if DEBUG
         @Option(name: .shortAndLong, help: "MQTT Server topic.") var basetopic: String = "example/unifi/"
     #else
@@ -64,9 +66,9 @@ struct unifi2mqtt: AsyncParsableCommand
             JLog.info("Loglevel: \(logLevel)")
         }
 
-        let mqttPublisher = try await MQTTPublisher(hostname: mqttHostname, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: emitInterval, baseTopic: basetopic, jsonOutput: jsonOutput)
+        let mqttPublisher = try await MQTTPublisher(hostname: mqttHostname, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: minimumEmitInterval, baseTopic: basetopic, jsonOutput: jsonOutput)
 
-        let unifiHost = try await UnifiHost(host: unifiHostname, apiKey: unifiAPIKey, siteId: unifiSiteId, refreshInterval: refreshInterval)
+        let unifiHost = try await UnifiHost(host: unifiHostname, apiKey: unifiAPIKey, siteId: unifiSiteId, requestInterval: requestInterval, refreshInterval: maximumEmitInterval)
 
         Task { await unifiHost.run() }
 

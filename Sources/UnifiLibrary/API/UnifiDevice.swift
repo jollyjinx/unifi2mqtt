@@ -7,7 +7,7 @@ import JLog
 
 public struct UnifiDevice: Sendable, Codable
 {
-    public let id: String
+    public let id: UUID
     public let name: String
     public let model: String
     public let macAddress: String

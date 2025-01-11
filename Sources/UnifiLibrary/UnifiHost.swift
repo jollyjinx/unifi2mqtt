@@ -16,7 +16,12 @@ public final class UnifiHost
     private let host: String
     private let apiKey: String
     private let siteId: String
+
+    private let requestInterval: TimeInterval
     private let refreshInterval: TimeInterval
+    private lazy var staleTime : TimeInterval = { max(refreshInterval - ( requestInterval * 1.1 ), 0.0) }()
+    private var staleDate : Date { Date().addingTimeInterval(-staleTime) }
+
     private let httpTimeout: TimeAmount
 
     private let clientRequest: HTTPClientRequest
@@ -48,17 +53,15 @@ public final class UnifiHost
         didSet { deviceDetailsObservable.emit(deviceDetails) }
     }
 
+    public var lastUpdateClients: [String:Date] = [:]
+    public var lastUpdateDevices: [String:Date] = [:]
+
     public var lastUpdateOldDevices: Date = .distantPast
-    public var lastUpdateClients: Date = .distantPast
-    public var lastUpdateDevices: Date = .distantPast
     public var lastUpdateDeviceDetails: Date = .distantPast
 
-    public var maximumRefreshInterval: TimeInterval = 30.0
 
-    public var shouldRefreshOldDevices: Bool { lastUpdateOldDevices < Date() - maximumRefreshInterval }
-    public var shouldRefreshClients: Bool { lastUpdateClients < Date() - maximumRefreshInterval }
-    public var shouldRefreshDevices: Bool { lastUpdateDevices < Date() - maximumRefreshInterval }
-    public var shouldRefreshDevicedetails: Bool { lastUpdateDeviceDetails < Date() - maximumRefreshInterval }
+    public var shouldRefreshOldDevices: Bool { lastUpdateOldDevices < Date() - refreshInterval }
+    public var shouldRefreshDevicedetails: Bool { lastUpdateDeviceDetails < Date() - refreshInterval }
 
     static func findOutDefaultSiteId(host: String, apiKey: String, timeout: TimeAmount = .seconds(5)) async throws -> String
     {
@@ -93,7 +96,7 @@ public final class UnifiHost
         return site.id
     }
 
-    public init(host: String, apiKey: String, siteId: String?, refreshInterval: TimeInterval = 60.0, limit: Int = 100_000, timeout: TimeAmount = .seconds(5)) async throws
+    public init(host: String, apiKey: String, siteId: String?, requestInterval: TimeInterval = 60.0, refreshInterval: TimeInterval = 120.0, limit: Int = 100_000, timeout: TimeAmount = .seconds(5)) async throws
     {
         if let siteId, !siteId.isEmpty
         {
@@ -107,7 +110,9 @@ public final class UnifiHost
         self.host = host
         self.apiKey = apiKey
 
+        self.requestInterval = requestInterval
         self.refreshInterval = refreshInterval
+
         httpTimeout = timeout
         var clientRequest = HTTPClientRequest(url: "https://\(host)/proxy/network/integrations/v1/sites/\(self.siteId)/clients?limit=\(limit)")
         clientRequest.headers.add(name: "X-API-Key", value: apiKey)
@@ -129,7 +134,7 @@ public final class UnifiHost
     {
         while !Task.isCancelled
         {
-            try? await withThrowingTimeout(seconds: refreshInterval, body:
+            try? await withThrowingTimeout(seconds: requestInterval, body:
                 {
                     await withTaskGroup(of: Void.self)
                     { group in
@@ -138,10 +143,10 @@ public final class UnifiHost
                         group.addTask { do { try await self.updateClients() } catch { JLog.error("Error: \(error)") } }
                         group.addTask { do { try await self.updateDevices() } catch { JLog.error("Error: \(error)") } }
                         group.addTask { do { try await self.updateDevicesDetails() } catch { JLog.error("Error: \(error)") } }
-                        group.addTask { try? await Task.sleep(nanoseconds: UInt64(self.refreshInterval * 1_000_000_000)) }
+                        group.addTask { try? await Task.sleep(nanoseconds: UInt64(self.requestInterval * 1_000_000_000)) }
                     }
                 })
-            JLog.debug("Refreshed:\(Date()) refreshInterval:\(refreshInterval)")
+            JLog.debug("Refreshed:\(Date()) requestInterval:\(requestInterval)")
         }
     }
 
@@ -204,6 +209,7 @@ extension UnifiHost
         Set(oldDevices.compactMap(\.networks).joined())
     }
 
+
     func updateClients() async throws
     {
         let response = try await HTTPClientProvider.sharedHttpClient.execute(clientRequest, timeout: httpTimeout)
@@ -218,15 +224,24 @@ extension UnifiHost
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .iso8601
 
-        let unifiClients = try jsonDecoder.decode(UnifiClientsResponse.self, from: bodyData)
+        let unifiClients = try jsonDecoder.decode(UnifiClientsResponse.self, from: bodyData).data
 
-        let newClientSet = Set(unifiClients.data)
+        var newClientSet = Set<UnifiClient>()
 
-        if newClientSet != clients || shouldRefreshClients
+
+        unifiClients.forEach
         {
-            clients = newClientSet
-            lastUpdateClients = Date()
+            client in
+
+            if  let lastUpdate = lastUpdateClients[client.macAddress],
+            lastUpdate > staleDate
+            {
+                return
+            }
+            newClientSet.insert(client)
+            lastUpdateClients[client.macAddress] = Date()
         }
+        clients = newClientSet
     }
 
     func updateDevices() async throws
@@ -243,14 +258,23 @@ extension UnifiHost
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .iso8601
 
-        let unifiDevices = try jsonDecoder.decode(UnifiDevicesResponse.self, from: bodyData)
+        let unifiDevices = try jsonDecoder.decode(UnifiDevicesResponse.self, from: bodyData).data
 
-        let newDeviceSet = Set(unifiDevices.data)
-        if newDeviceSet != devices || shouldRefreshDevices
+        var newDevicesSet = Set<UnifiDevice>()
+
+        unifiDevices.forEach
         {
-            devices = newDeviceSet
-            lastUpdateDevices = Date()
+            device in
+
+            if  let lastUpdate = lastUpdateClients[device.macAddress],
+            lastUpdate > staleDate
+            {
+                return
+            }
+            newDevicesSet.insert(device)
+            lastUpdateClients[device.macAddress] = Date()
         }
+        devices = newDevicesSet
     }
 
     func updateDevicesDetails() async throws
