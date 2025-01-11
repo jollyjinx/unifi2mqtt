@@ -53,8 +53,20 @@ public final class UnifiHost
         didSet { deviceDetailsObservable.emit(deviceDetails) }
     }
 
-    public var lastTimeClientPublished: [String:Date] = [:]
-    public var lastUpdateDevices: [String:Date] = [:]
+    struct ClientCacheEntry: Sendable, Hashable, Equatable
+    {
+        let client: UnifiClient
+        let lastUpdate: Date
+    }
+    private var clientCache: [String:ClientCacheEntry] = [:]
+
+    struct DeviceCacheEntry: Sendable, Hashable, Equatable
+    {
+        let device: UnifiDevice
+        let lastUpdate: Date
+    }
+
+    private var deviceCache: [String:DeviceCacheEntry] = [:]
 
     public var lastUpdateOldDevices: Date = .distantPast
     public var lastUpdateDeviceDetails: Date = .distantPast
@@ -231,24 +243,27 @@ extension UnifiHost
         let unifiClientsArray = try jsonDecoder.decode(UnifiClientsResponse.self, from: bodyData).data
         var newClientSet = Set<UnifiClient>()
 
+
         var knownCounter = 0
         unifiClientsArray.forEach
         {
             client in
 
-            if  let lastUpdate = lastTimeClientPublished[client.macAddress]
+            if let cacheEntry = clientCache[client.macAddress]
             {
                 knownCounter += 1
-                guard lastUpdate < staleDate else { return }
+                guard cacheEntry.lastUpdate < staleDate else { return }
+                guard !cacheEntry.client.isEqual(to:client) else { return }
             }
             newClientSet.insert(client)
-            lastTimeClientPublished[client.macAddress] = Date()
+            clientCache[client.macAddress] = ClientCacheEntry(client: client, lastUpdate: Date())
         }
-        lastTimeClientPublished = lastTimeClientPublished.filter { $0.value > staleDate }
-        
-        JLog.debug("Refresh clients:\(unifiClientsArray.count) known:\(lastTimeClientPublished.count) new:\(newClientSet.count) old clients:\(clients.count) known:\(knownCounter)")
+        clientCache = clientCache.filter { $0.value.lastUpdate > staleDate }
+
+        JLog.debug("Refresh got clients:\(unifiClientsArray.count) cache:\(clientCache.count) newClientSet:\(newClientSet.count) old clients:\(clients.count) known:\(knownCounter)")
         JLog.debug("new clients \(newClientSet.map(\.name).sorted().joined(separator: ","))")
-        if clients != newClientSet
+
+        if !newClientSet.isEmpty
         {
             clients = newClientSet
         }
@@ -268,24 +283,29 @@ extension UnifiHost
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .iso8601
 
-        let unifiDevices = try jsonDecoder.decode(UnifiDevicesResponse.self, from: bodyData).data
+        let unifiDevicesArray = try jsonDecoder.decode(UnifiDevicesResponse.self, from: bodyData).data
 
         var newDevicesSet = Set<UnifiDevice>()
+            var knownCounter = 0
 
-        unifiDevices.forEach
+        unifiDevicesArray.forEach
         {
             device in
 
-            if  let lastUpdate = lastTimeClientPublished[device.macAddress],
-            lastUpdate > staleDate
+            if let cacheEntry = deviceCache[device.macAddress]
             {
-                return
+                knownCounter += 1
+                guard cacheEntry.lastUpdate < staleDate else { return }
+                guard !cacheEntry.device.isEqual(to:device) else { return }
             }
             newDevicesSet.insert(device)
-            lastTimeClientPublished[device.macAddress] = Date()
+            deviceCache[device.macAddress] = DeviceCacheEntry(device: device, lastUpdate: Date())
         }
+        deviceCache = deviceCache.filter { $0.value.lastUpdate > staleDate }
+        JLog.debug("Refresh got devices:\(unifiDevicesArray.count) cache:\(deviceCache.count) newDeviceSet:\(newDevicesSet.count) old devices:\(devices.count) known:\(knownCounter)")
+        JLog.debug("new devices \(newDevicesSet.map(\.name).sorted().joined(separator: ","))")
 
-        if devices != newDevicesSet
+        if !newDevicesSet.isEmpty
         {
             devices = newDevicesSet
         }

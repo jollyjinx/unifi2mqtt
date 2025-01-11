@@ -19,7 +19,7 @@ public struct UnifiClient: Sendable
 
 extension UnifiClient
 {
-    func isEqual(to other: UnifiClient) -> Bool
+    public func isEqual(to other: UnifiClient) -> Bool
     {
         if      type == other.type
             &&  ipAddress == other.ipAddress

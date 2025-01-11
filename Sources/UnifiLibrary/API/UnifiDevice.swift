@@ -29,3 +29,22 @@ extension UnifiDevice: Hashable, Equatable
         return lhs.macAddress == rhs.macAddress
     }
 }
+
+extension UnifiDevice
+{
+    public func isEqual(to other: UnifiDevice) -> Bool
+    {
+        if     id == other.id
+            && name == other.name
+            && model == other.model
+            && macAddress == other.macAddress
+            && ipAddress == other.ipAddress
+            && state == other.state
+            && features == other.features
+            && interfaces == other.interfaces
+        {
+            return true
+        }
+        return false
+    }
+}
