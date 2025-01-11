@@ -38,19 +38,4 @@ public struct UnifiDeviceInterfaceDetails: Sendable, Codable, Hashable, Equatabl
     public let ports: [UnifiDevicePortDetail]?
 }
 
-public struct UnifiDeviceRadioDetail: Sendable, Codable, Hashable, Equatable
-{
-    public let wlanStandard: String
-    public let frequencyGHz: Double
-    public let channelWidthMHz: Int
-    public let channel: Int
-}
 
-public struct UnifiDevicePortDetail: Sendable, Codable, Hashable, Equatable
-{
-    public let idx: Int
-    public let state: String
-    public let connector: String
-    public let maxSpeedMbps: Int
-    public let speedMbps: Int?
-}

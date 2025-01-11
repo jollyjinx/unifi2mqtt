@@ -1,0 +1,36 @@
+{
+  "offset": 0,
+  "limit": 200,
+  "count": 2,
+  "totalCount": 2,
+  "data": [
+    {
+      "id": "0bf47798-ff60-398c-becf-9fcd08e6c802",
+      "name": "plt-switch24",
+      "model": "USW 24 PoE",
+      "macAddress": "74:ac:b9:40:75:a2",
+      "ipAddress": "192.168.112.180",
+      "state": "ONLINE",
+      "features": [
+        "switching"
+      ],
+      "interfaces": [
+        "ports"
+      ]
+    },
+    {
+      "id": "e0f1e217-d486-3fc9-92a1-98d8eb7398ff",
+      "name": "plt-livingroom",
+      "model": "U6 Pro",
+      "macAddress": "78:45:58:b3:9d:8f",
+      "ipAddress": "192.168.112.135",
+      "state": "ONLINE",
+      "features": [
+        "accessPoint"
+      ],
+      "interfaces": [
+        "radios"
+      ]
+    }
+  ]
+}

@@ -26,28 +26,18 @@ extension UnifiDevice: Hashable, Equatable
     }
 }
 
-public enum UnifiDeviceState: String, Codable, Sendable
+struct OptionalUnifiDevice: Decodable, Sendable
 {
-    case online = "ONLINE"
-    case offline = "OFFLINE"
-    case pendingAdoption = "PENDING_ADOPTION"
-    case updating = "UPDATING"
-    case gettingReady = "GETTING_READY"
-    case adopting = "ADOPTING"
-    case deleting = "DELETING"
-    case connectionInterrupted = "CONNECTION_INTERRUPTED"
-    case isolated = "ISOLATED"
+    public let unifiDevice: UnifiDevice?
+
+    public init(from decoder: Decoder) throws {
+        do {
+            self.unifiDevice = try UnifiDevice(from: decoder)
+        } catch {
+            self.unifiDevice = nil
+            print("Error decoding UnifiDevice: \(error)")
+        }
+    }
 }
 
-public enum UnfiDeviceFeatures: String, Codable, Sendable
-{
-    case accesspoint = "accessPoint"
-    case switching
-}
 
-public enum UnifiDeviceInterfaceType: String, Codable, Sendable
-{
-    case radios
-    case ports
-    case gateway
-}

@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import JLog
 
 public struct UnifiClient: Sendable
 {
@@ -27,34 +28,44 @@ extension UnifiClient: Hashable, Equatable
     }
 }
 
+public struct OptionalUnifiClient: Decodable, Sendable
+{
+    public let unifiClient: UnifiClient?
+
+    public init(from decoder: Decoder) throws {
+        do {
+            self.unifiClient = try UnifiClient(from: decoder)
+        } catch {
+            self.unifiClient = nil
+            // Log the decoding error
+            print("Error decoding UnifiClient: \(error)")
+        }
+    }
+}
+
 extension UnifiClient: Codable
 {
-    enum CodingKeys: String, CodingKey
-    {
-        case type
-        case id
-        case name
-        case connectedAt
-        case ipAddress
-        case macAddress
-
-        case lastSeen
-    }
-
     public init(from decoder: Decoder) throws
     {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+        do
+        {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        type = try container.decode(UnifiClientType.self, forKey: .type)
-        id = try container.decode(String.self, forKey: .id)
-        name = try container.decode(String.self, forKey: .name)
-        connectedAt = try container.decode(Date.self, forKey: .connectedAt)
-        ipAddress = try? container.decode(String.self, forKey: .ipAddress)
-        macAddress = try container.decode(String.self, forKey: .macAddress)
+            type = try container.decode(UnifiClientType.self, forKey: .type)
+            id = try container.decode(String.self, forKey: .id)
+            name = try container.decode(String.self, forKey: .name)
+            connectedAt = try container.decode(Date.self, forKey: .connectedAt)
+            ipAddress = try? container.decode(String.self, forKey: .ipAddress)
+            macAddress = try container.decode(String.self, forKey: .macAddress)
 
-        lastSeen = (try? container.decode(Date.self, forKey: .lastSeen)) ?? Date()
+            lastSeen = (try? container.decode(Date.self, forKey: .lastSeen)) ?? Date()
+        }
+        catch
+        {
+            JLog.error("Error decoding UnifiClient: \( error)")
+            throw error
+        }
     }
-
 }
 
 // public extension UnifiClient

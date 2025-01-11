@@ -1,0 +1,35 @@
+{
+  "offset": 0,
+  "limit": 200,
+  "count": 2,
+  "totalCount": 2,
+  "data": [
+    {
+      "id": "7B973522-04AD-4B32-97D0-2617EDF48964",
+      "name": "device-a",
+      "model": "USW 24 PoE",
+      "macAddress": "ca:fe:ba:be:00:01",
+      "ipAddress": "192.168.112.180",
+      "state": "ONLINE",
+      "features": [
+        "switching"
+      ],
+      "interfaces": [
+        "ports"
+      ]
+    },
+    {
+      "id": "45C354E6-94FA-419B-952D-BD9D4C54059A",
+      "name": "device-b",
+      "model": "U6 Pro",
+      "ipAddress": "192.168.112.135",
+      "state": "ONLINE",
+      "features": [
+        "accessPoint"
+      ],
+      "interfaces": [
+        "radios"
+      ]
+    }
+  ]
+}

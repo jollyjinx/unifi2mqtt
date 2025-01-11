@@ -1,0 +1,25 @@
+{
+  "offset": 0,
+  "limit": 200,
+  "count": 2,
+  "totalCount": 2,
+  "data": [
+    {
+      "type": "WIRED",
+      "id": "9F8692EC-BBE5-44C3-A7A8-09D7A34509CB",
+      "name": "hosta",
+      "connectedAt": "2024-12-09T17:24:54Z",
+      "ipAddress": "172.16.1.1",
+      "macAddress": "ca:fe:ba:be:00:01",
+      "uplinkDeviceId": "A8B168CA-C767-452A-BBAC-AAD51B3ACF2D"
+    },
+    {
+      "type": "WIRED",
+      "id": "B2C1DA0F-AED6-4BDF-B843-A35AFCFDAFA0",
+      "name": "hostb",
+      "connectedAt": "2024-12-09T17:24:54Z",
+      "ipAddress": "172.16.2.1",
+      "uplinkDeviceId": "A8B168CA-C767-452A-BBAC-AAD51B3ACF2D"
+    }
+  ]
+}

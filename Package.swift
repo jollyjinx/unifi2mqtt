@@ -25,4 +25,13 @@ let package = Package(name: "unifi2mqtt",
                                       .product(name: "JLog", package: "JLog"),
                                       .product(name: "AsyncHTTPClient", package: "async-http-client"),
                                   ]),
+                          .testTarget(name: "UnifiLibraryTests",
+                                      dependencies: [
+                                            "UnifiLibrary",
+                                          .product(name: "JLog", package: "JLog"),
+                                      ],
+                                        resources: [
+                                            .copy("Resources"),
+                                        ]
+                                ),
                       ])
