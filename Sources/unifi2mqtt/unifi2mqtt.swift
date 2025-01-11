@@ -45,11 +45,12 @@ struct unifi2mqtt: AsyncParsableCommand
     @Option(name: .long, help: "MQTT Server username") var mqttUsername: String = "mqtt"
     @Option(name: .long, help: "MQTT Server password") var mqttPassword: String = ""
     @Option(name: .long, help: "Minimum Emit Interval to send updates to mqtt Server.") var minimumEmitInterval: Double = 1.0
-    @Option(name: .long, help: "Maximum Emit Interval to send updates to mqtt Server.") var maximumEmitInterval: Double = 60.0
 
     #if DEBUG
+        @Option(name: .long, help: "Maximum Emit Interval to send updates to mqtt Server.") var maximumEmitInterval: Double = 180.0
         @Option(name: .shortAndLong, help: "MQTT Server topic.") var basetopic: String = "example/unifi/"
     #else
+        @Option(name: .long, help: "Maximum Emit Interval to send updates to mqtt Server.") var maximumEmitInterval: Double = 60.0
         @Option(name: .shortAndLong, help: "MQTT Server topic.") var basetopic: String = "unifi/"
     #endif
 
