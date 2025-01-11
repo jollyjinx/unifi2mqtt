@@ -16,6 +16,7 @@ extension JLog.Level: @retroactive ExpressibleByArgument {}
 #endif
 
 @main
+@MainActor
 struct unifi2mqtt: AsyncParsableCommand
 {
     @Option(help: "Set the log level.") var logLevel: JLog.Level = defaultLoglevel
@@ -54,7 +55,6 @@ struct unifi2mqtt: AsyncParsableCommand
 
     @Flag(name: .long, help: "Retain messages on mqtt server") var retain: Bool = false
 
-    @MainActor
     func run() async throws
     {
         JLog.loglevel = logLevel
@@ -87,6 +87,7 @@ struct unifi2mqtt: AsyncParsableCommand
             {
                 for await clients in await unifiHost.observeClients()
                 {
+                    JLog.debug("Clients updated:\(clients.count)")
                     try? await mqttUpdateClient(clients, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
                 }
             }
@@ -105,15 +106,16 @@ struct unifi2mqtt: AsyncParsableCommand
                 }
             }
         }
-        JLog.error("Exited TaskGroup - this should not happen")
+        fatalError("Exited TaskGroup - this should not happen")
     }
 
     func mqttUpdateClient(_ clients: Set<UnifiClient>, mqttPublisher: MQTTPublisher, unifiHost: UnifiHost) async throws
     {
-        async let networks = unifiHost.networks
+        let networks = unifiHost.networks
 
         for client in clients
         {
+            JLog.debug("Updating client \(client.name)")
             for publishingOption in publishingOptions.options
             {
                 switch publishingOption
@@ -129,12 +131,25 @@ struct unifi2mqtt: AsyncParsableCommand
 
                     case .hostsbymac: try await mqttPublisher.publish(to: [publishingOption.rawValue, client.macAddress], payload: client.json, qos: .atMostOnce, retain: retain)
 
-                    case .hostsbynetwork: if let ipAddress = client.ipAddress,
-                                         let network = await networks.first(where: { $0.contains(ip: ipAddress) })?.name
+                    case .hostsbynetwork: if networks.isEmpty
                         {
-                            try await mqttPublisher.publish(to: [publishingOption.rawValue, network, ipAddress], payload: client.json, qos: .atMostOnce, retain: retain)
+                            JLog.error("Can't update hostsbynetwork: no networks found")
                         }
-
+                        else if let ipAddress = client.ipAddress
+                        {
+                            if let network = networks.first(where: { $0.contains(ip: ipAddress) })?.name
+                            {
+                                try await mqttPublisher.publish(to: [publishingOption.rawValue, network, ipAddress], payload: client.json, qos: .atMostOnce, retain: retain)
+                            }
+                            else
+                            {
+                                JLog.error("Can't update hostsbynetwork: no network found \(client.description)")
+                            }
+                        }
+                        else
+                        {
+                            JLog.debug( "Can't update hostsbynetwork: no ipAddress found \(client.description)")
+                        }
                     default: break
                 }
             }

@@ -7,8 +7,14 @@ import JLog
 import MQTTNIO
 import NIO
 
+
 public actor MQTTPublisher
 {
+    enum MQTTClientError: Swift.Error
+    {
+        case connectFailed
+    }
+
     let mqttClient: MQTTClient
     let jsonOutput: Bool
     let emitInterval: Double
@@ -44,21 +50,64 @@ public actor MQTTPublisher
         guard timenow.timeIntervalSince(lasttime) > emitInterval else { return }
         lasttimeused[topic] = timenow
 
-        mqttQueue.async
+        if self.jsonOutput
         {
-            let byteBuffer = ByteBuffer(string: payload)
+            print("{\"topic\":\"\(topic)\",\"payload\":\(payload)}")
+        }
+        var sendcounter = 10
+        var sent = false
+        while !sent && sendcounter > 0
+        {
+            sendcounter -= 1
 
             if !self.mqttClient.isActive()
             {
-                _ = self.mqttClient.connect()
+                do
+                {
+                    JLog.debug("mqttClient.is NOT Active")
+                    guard try await self.mqttClient.connect() else { throw MQTTClientError.connectFailed }
+                }
+                catch
+                {
+                    JLog.error("mqttClient.connect failed: \(error)")
+                    try? await Task.sleep(for: .seconds(1))
+                }
             }
-            JLog.debug("publish:\(topic) payload:\(payload)")
-            _ = self.mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
-
-            if self.jsonOutput
+            else
             {
-                print("{\"topic\":\"\(topic)\",\"payload\":\(payload)}")
+                do
+                {
+                    let byteBuffer = ByteBuffer(string: payload)
+                    JLog.debug("publish:\(topic)")
+                    JLog.trace("publish:\(topic) payload:\(payload)")
+
+                    try await self.mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
+                    sent = true
+                }
+                catch
+                {
+                    JLog.error("mqttClient.publish failed: \(error)")
+                }
             }
         }
+        if sendcounter == 0
+        {
+            JLog.error("mqttClient.publish failed: \(topic)")
+        }
+//        let byteBuffer = ByteBuffer(string: payload)
+//
+//        mqttQueue.async
+//        {
+//            let byteBuffer = ByteBuffer(string: payload)
+//
+//            while !self.mqttClient.isActive()
+//            {
+//                JLog.debug("mqttClient.is NOT Active")
+//                _ = self.mqttClient.connect()
+//            }
+//            JLog.debug("publish:\(topic)")
+//            JLog.trace("publish:\(topic) payload:\(payload)")
+//            let published = tr self.mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
+
     }
 }

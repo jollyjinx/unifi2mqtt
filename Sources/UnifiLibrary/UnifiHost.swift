@@ -53,7 +53,7 @@ public final class UnifiHost
         didSet { deviceDetailsObservable.emit(deviceDetails) }
     }
 
-    public var lastUpdateClients: [String:Date] = [:]
+    public var lastTimeClientPublished: [String:Date] = [:]
     public var lastUpdateDevices: [String:Date] = [:]
 
     public var lastUpdateOldDevices: Date = .distantPast
@@ -140,9 +140,13 @@ public final class UnifiHost
                     { group in
 
                         group.addTask { do { try await self.updateOldDevices() } catch { JLog.error("Error: \(error)") } }
-                        group.addTask { do { try await self.updateClients() } catch { JLog.error("Error: \(error)") } }
-                        group.addTask { do { try await self.updateDevices() } catch { JLog.error("Error: \(error)") } }
-                        group.addTask { do { try await self.updateDevicesDetails() } catch { JLog.error("Error: \(error)") } }
+
+                        if !networks.isEmpty
+                        {
+                            group.addTask { do { try await self.updateClients() } catch { JLog.error("Error: \(error)") } }
+                            group.addTask { do { try await self.updateDevices() } catch { JLog.error("Error: \(error)") } }
+                            group.addTask { do { try await self.updateDevicesDetails() } catch { JLog.error("Error: \(error)") } }
+                        }
                         group.addTask { try? await Task.sleep(nanoseconds: UInt64(self.requestInterval * 1_000_000_000)) }
                     }
                 })
@@ -224,24 +228,30 @@ extension UnifiHost
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .iso8601
 
-        let unifiClients = try jsonDecoder.decode(UnifiClientsResponse.self, from: bodyData).data
-
+        let unifiClientsArray = try jsonDecoder.decode(UnifiClientsResponse.self, from: bodyData).data
         var newClientSet = Set<UnifiClient>()
 
-
-        unifiClients.forEach
+        var knownCounter = 0
+        unifiClientsArray.forEach
         {
             client in
 
-            if  let lastUpdate = lastUpdateClients[client.macAddress],
-            lastUpdate > staleDate
+            if  let lastUpdate = lastTimeClientPublished[client.macAddress]
             {
-                return
+                knownCounter += 1
+                guard lastUpdate < staleDate else { return }
             }
             newClientSet.insert(client)
-            lastUpdateClients[client.macAddress] = Date()
+            lastTimeClientPublished[client.macAddress] = Date()
         }
-        clients = newClientSet
+        lastTimeClientPublished = lastTimeClientPublished.filter { $0.value > staleDate }
+        
+        JLog.debug("Refresh clients:\(unifiClientsArray.count) known:\(lastTimeClientPublished.count) new:\(newClientSet.count) old clients:\(clients.count) known:\(knownCounter)")
+        JLog.debug("new clients \(newClientSet.map(\.name).sorted().joined(separator: ","))")
+        if clients != newClientSet
+        {
+            clients = newClientSet
+        }
     }
 
     func updateDevices() async throws
@@ -266,15 +276,19 @@ extension UnifiHost
         {
             device in
 
-            if  let lastUpdate = lastUpdateClients[device.macAddress],
+            if  let lastUpdate = lastTimeClientPublished[device.macAddress],
             lastUpdate > staleDate
             {
                 return
             }
             newDevicesSet.insert(device)
-            lastUpdateClients[device.macAddress] = Date()
+            lastTimeClientPublished[device.macAddress] = Date()
         }
-        devices = newDevicesSet
+
+        if devices != newDevicesSet
+        {
+            devices = newDevicesSet
+        }
     }
 
     func updateDevicesDetails() async throws

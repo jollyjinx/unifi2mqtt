@@ -22,10 +22,10 @@ extension UnifiClient
     func isEqual(to other: UnifiClient) -> Bool
     {
         if      type == other.type
+            &&  ipAddress == other.ipAddress
             &&  id == other.id
             &&  name == other.name
             &&  connectedAt == other.connectedAt
-            &&  ipAddress == other.ipAddress
             &&  macAddress == other.macAddress
         {
             return true
