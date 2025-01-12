@@ -45,21 +45,14 @@ public final class UnifiHost
         didSet { deviceDetailsObservable.emit(deviceDetails) }
     }
 
-    struct ClientCacheEntry: Sendable, Hashable, Equatable
+    struct CacheEntry<T: Sendable & Hashable & Equatable>: Sendable, Hashable, Equatable
     {
-        let client: UnifiClient
+        let entry: T
         let lastUpdate: Date
     }
 
-    private var clientCache: [MACAddress: ClientCacheEntry] = [:]
-
-    struct DeviceCacheEntry: Sendable, Hashable, Equatable
-    {
-        let device: UnifiDevice
-        let lastUpdate: Date
-    }
-
-    private var deviceCache: [MACAddress: DeviceCacheEntry] = [:]
+    private var clientCache: [MACAddress: CacheEntry<UnifiClient>] = [:]
+    private var deviceCache: [MACAddress: CacheEntry<UnifiDevice>] = [:]
 
     public var lastUpdateOldDevices: Date = .distantPast
     public var lastUpdateDeviceDetails: Date = .distantPast
@@ -141,28 +134,30 @@ extension UnifiHost
     {
         let retrievedClients = try await hostRetriever.clients()
 
-        var newClientSet = Set<UnifiClient>()
-        var knownCounter = 0
+        var clientsToPublish = Set<UnifiClient>()
+
+        var newCache = [MACAddress: CacheEntry<UnifiClient>]()
 
         for client in retrievedClients
         {
-            if let cacheEntry = clientCache[client.macAddress]
+            if let cacheEntry = clientCache[client.macAddress],
+                cacheEntry.entry.isEqual(to: client),            // has not changed
+                cacheEntry.lastUpdate > staleDate                // not stale
             {
-                knownCounter += 1
-                guard cacheEntry.lastUpdate < staleDate else { continue }
-                guard !cacheEntry.client.isEqual(to: client) else { continue }
+                newCache[client.macAddress] = cacheEntry
+                continue
             }
-            newClientSet.insert(client)
-            clientCache[client.macAddress] = ClientCacheEntry(client: client, lastUpdate: Date())
+            clientsToPublish.insert(client)
+            newCache[client.macAddress] = CacheEntry(entry: client, lastUpdate: Date())
         }
-        clientCache = clientCache.filter { $0.value.lastUpdate > staleDate }
 
-        JLog.debug("Refresh got clients:\(retrievedClients.count) cache:\(clientCache.count) newClientSet:\(newClientSet.count) old clients:\(clients.count) known:\(knownCounter)")
-        JLog.debug("new clients \(newClientSet.map(\.name).sorted().joined(separator: ","))")
+        JLog.debug("Refresh got clients:\(retrievedClients.count) oldcache:\(clientCache.count) newCache:\(newCache.count) clientsToPublish:\(clientsToPublish.count)")
+        JLog.debug("new clients \(clientsToPublish.map(\.name).sorted().joined(separator: ","))")
 
-        if !newClientSet.isEmpty
+        clientCache = newCache
+        if !clientsToPublish.isEmpty
         {
-            clients = newClientSet
+            clients = clientsToPublish
         }
     }
 
@@ -179,10 +174,10 @@ extension UnifiHost
             {
                 knownCounter += 1
                 guard cacheEntry.lastUpdate < staleDate else { continue }
-                guard !cacheEntry.device.isEqual(to: device) else { continue }
+                guard !cacheEntry.entry.isEqual(to: device) else { continue }
             }
             newDevicesSet.insert(device)
-            deviceCache[device.macAddress] = DeviceCacheEntry(device: device, lastUpdate: Date())
+            deviceCache[device.macAddress] = CacheEntry(entry: device, lastUpdate: Date())
         }
         deviceCache = deviceCache.filter { $0.value.lastUpdate > staleDate }
         JLog.debug("Refresh got devices:\(retrievedDevices.count) cache:\(deviceCache.count) newDeviceSet:\(newDevicesSet.count) old devices:\(devices.count) known:\(knownCounter)")
