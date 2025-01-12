@@ -51,7 +51,7 @@ public final class UnifiHost
         let lastUpdate: Date
     }
 
-    private var clientCache: [String: ClientCacheEntry] = [:]
+    private var clientCache: [MACAddress: ClientCacheEntry] = [:]
 
     struct DeviceCacheEntry: Sendable, Hashable, Equatable
     {
@@ -59,7 +59,7 @@ public final class UnifiHost
         let lastUpdate: Date
     }
 
-    private var deviceCache: [String: DeviceCacheEntry] = [:]
+    private var deviceCache: [MACAddress: DeviceCacheEntry] = [:]
 
     public var lastUpdateOldDevices: Date = .distantPast
     public var lastUpdateDeviceDetails: Date = .distantPast

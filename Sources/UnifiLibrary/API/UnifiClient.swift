@@ -12,7 +12,7 @@ public struct UnifiClient: Sendable
     public let name: String
     public let connectedAt: Date
     public let ipAddress: String?
-    public let macAddress: String
+    public let macAddress: MACAddress
 
     public let lastSeen: Date? // currently not in json so it will be generated on the fly
 }
@@ -60,7 +60,7 @@ extension UnifiClient: Codable
             name = try container.decode(String.self, forKey: .name)
             connectedAt = try container.decode(Date.self, forKey: .connectedAt)
             ipAddress = try? container.decode(String.self, forKey: .ipAddress)
-            macAddress = try container.decode(String.self, forKey: .macAddress)
+            macAddress = try container.decode(MACAddress.self, forKey: .macAddress)
 
             lastSeen = (try? container.decode(Date.self, forKey: .lastSeen)) ?? Date()
         }

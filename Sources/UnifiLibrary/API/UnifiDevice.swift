@@ -10,7 +10,7 @@ public struct UnifiDevice: Sendable, Codable
     public let id: UUID
     public let name: String
     public let model: String
-    public let macAddress: String
+    public let macAddress: MACAddress
     public let ipAddress: String?
     public let state: UnifiDeviceState
     public let features: Set<UnfiDeviceFeatures>
