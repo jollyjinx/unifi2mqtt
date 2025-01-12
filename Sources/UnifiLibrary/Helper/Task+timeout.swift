@@ -4,6 +4,10 @@
 
 import Foundation
 
+#if os(Linux)
+public let NSEC_PER_SEC: UInt64 = 1_000_000_000
+#endif
+
 public struct TimeoutError: LocalizedError
 {
     public var errorDescription: String?
@@ -21,7 +25,7 @@ public struct TimeoutError: LocalizedError
     {
         try await _withThrowingTimeout(isolation: isolation, body: body)
         {
-            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            try await Task.sleep(nanoseconds: UInt64(seconds * Double(NSEC_PER_SEC)))
             throw TimeoutError("Task timed out before completion. Timeout: \(seconds) seconds.")
         }.value
     }
@@ -107,7 +111,7 @@ public struct TimeoutError: LocalizedError
         {
             try await _withThrowingTimeout(body: $0)
             {
-                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                try await Task.sleep(nanoseconds: UInt64(seconds * NSEC_PER_SEC))
                 throw TimeoutError("Task timed out before completion. Timeout: \(seconds) seconds.")
             }
         }.value
