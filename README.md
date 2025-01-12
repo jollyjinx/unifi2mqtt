@@ -52,7 +52,7 @@
     USAGE: unifi2mqtt [<options>] --unifi-api-key <unifi-api-key>
 
     OPTIONS:
-    --log-level <log-level> Set the log level. (values: trace, debug, info, notice, warning, error, critical; default: notice)
+    --log-level <log-level> Set the log level. (values: trace, debug, info, notice, warning, error, critical; default: debug)
     --json-output           send json output to stdout
     --unifi-hostname <unifi-hostname>
                           Unifi hostname (default: unifi)
@@ -62,10 +62,10 @@
                           Unifi API key
     --unifi-site-id <unifi-site-id>
                           Unifi site id
-    -r, --refresh-interval <refresh-interval>
-                          Unifi request interval. (default: 10.0)
+    -r, --request-interval <request-interval>
+                          Unifi request interval. (default: 5.0)
     --publishing-options <options>
-                          Specify publishing options as a comma-separated list. (default: devicedetailsbymac, devicesbymac, hostsbyip, hostsbymac, hostsbyname, hostsbynetwork)
+                          Specify publishing options as a comma-separated list. (default: hostsbynetwork, olddevicesbytype)
         Available options: 
         - hostsbyid: Publish hosts by their unifi id
         - hostsbyip: Publish hosts by IP address
@@ -80,17 +80,20 @@
         - devicedetailsbyip: Publish unifi device details by IP address
         - devicedetailsbyname: Publish unifi device details by name
         - devicedetailsbymac: Publish unifi device details by MAC address
-    --mqtt-servername <mqtt-servername>
+        - olddevicesbytype: Publish old unifi device details by type
+    --mqtt-hostname <mqtt-hostname>
                           MQTT Server hostname (default: mqtt)
     --mqtt-port <mqtt-port> MQTT Server port (default: 1883)
     --mqtt-username <mqtt-username>
                           MQTT Server username (default: mqtt)
     --mqtt-password <mqtt-password>
                           MQTT Server password
-    -e, --emit-interval <emit-interval>
+    --minimum-emit-interval <minimum-emit-interval>
                           Minimum Emit Interval to send updates to mqtt Server. (default: 1.0)
+    --maximum-emit-interval <maximum-emit-interval>
+                          Maximum Emit Interval to send updates to mqtt Server. (default: 60.0)
     -b, --basetopic <basetopic>
-                          MQTT Server topic. (default: unifi/)
+                          MQTT Server topic. (default: example/unifi/)
     --retain                Retain messages on mqtt server
     -h, --help              Show help information.
     ```
