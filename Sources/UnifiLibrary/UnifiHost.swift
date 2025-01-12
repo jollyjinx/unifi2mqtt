@@ -165,27 +165,30 @@ extension UnifiHost
     {
         let retrievedDevices = try await hostRetriever.devices()
 
-        var newDevicesSet = Set<UnifiDevice>()
-        var knownCounter = 0
+        var devicesToPublish = Set<UnifiDevice>()
+
+        var newCache = [MACAddress: CacheEntry<UnifiDevice>]()
 
         for device in retrievedDevices
         {
-            if let cacheEntry = deviceCache[device.macAddress]
+            if let cacheEntry = deviceCache[device.macAddress],
+                cacheEntry.entry.isEqual(to: device),            // has not changed
+                cacheEntry.lastUpdate > staleDate                // not stale
             {
-                knownCounter += 1
-                guard cacheEntry.lastUpdate < staleDate else { continue }
-                guard !cacheEntry.entry.isEqual(to: device) else { continue }
+                newCache[device.macAddress] = cacheEntry
+                continue
             }
-            newDevicesSet.insert(device)
-            deviceCache[device.macAddress] = CacheEntry(entry: device, lastUpdate: Date())
+            devicesToPublish.insert(device)
+            newCache[device.macAddress] = CacheEntry(entry: device, lastUpdate: Date())
         }
-        deviceCache = deviceCache.filter { $0.value.lastUpdate > staleDate }
-        JLog.debug("Refresh got devices:\(retrievedDevices.count) cache:\(deviceCache.count) newDeviceSet:\(newDevicesSet.count) old devices:\(devices.count) known:\(knownCounter)")
-        JLog.debug("new devices \(newDevicesSet.map(\.name).sorted().joined(separator: ","))")
 
-        if !newDevicesSet.isEmpty
+        JLog.debug("Refresh got devices:\(retrievedDevices.count) oldcache:\(deviceCache.count) newCache:\(newCache.count) clientsToPublish:\(devicesToPublish.count)")
+        JLog.debug("new clients \(devicesToPublish.map(\.name).sorted().joined(separator: ","))")
+
+        deviceCache = newCache
+        if !devicesToPublish.isEmpty
         {
-            devices = newDevicesSet
+            devices = devicesToPublish
         }
     }
 
