@@ -1,23 +1,21 @@
 //
-//  Error.swift
-//  unifi2mqtt
+//  UnifiHostRetriever.swift
 //
-//  Created by Patrick Stein on 12.01.25.
-//
+
+import AsyncHTTPClient
 import Foundation
 import JLog
-import AsyncHTTPClient
 import NIOCore
 import NIOFoundationCompat
 import NIOHTTP1
 
 struct UnifiHostRetriever
 {
-    internal let host: String
-    internal let apiKey: String
-    internal var siteId: String = ""
-    internal let httpTimeout: TimeAmount
-    internal let limit: Int
+    let host: String
+    let apiKey: String
+    var siteId: String = ""
+    let httpTimeout: TimeAmount
+    let limit: Int
 
     public enum Error: Swift.Error
     {
@@ -33,7 +31,7 @@ struct UnifiHostRetriever
         self.limit = limit
         self.httpTimeout = httpTimeout
 
-        if let siteId = siteId
+        if let siteId
         {
             self.siteId = siteId
         }
@@ -63,16 +61,15 @@ extension UnifiHostRetriever
         return bodyData
     }
 
-    func retrieveAndParse<T: Decodable>(path: String, type: T.Type, dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .iso8601) async throws -> T
+    func retrieveAndParse<T: Decodable>(path: String, type _: T.Type, dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .iso8601) async throws -> T
     {
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = dateDecodingStrategy
 
-        let result:T = try jsonDecoder.decode(T.self, from: try await retrieve(path: path))
+        let result: T = try await jsonDecoder.decode(T.self, from: retrieve(path: path))
         return result
     }
 }
-
 
 extension UnifiHostRetriever
 {
@@ -89,28 +86,31 @@ extension UnifiHostRetriever
         return site
     }
 
-    func oldDevices() async throws -> DeviceResponse
+    func oldDevices() async throws -> Set<Device>
     {
-        let path =  "/proxy/network/api/s/default/stat/device"
-        return try await retrieveAndParse(path: path, type: DeviceResponse.self, dateDecodingStrategy:.secondsSince1970)
+        let path = "/proxy/network/api/s/default/stat/device"
+        let deviceResponse = try await retrieveAndParse(path: path, type: DeviceResponse.self, dateDecodingStrategy: .secondsSince1970)
+        return Set(deviceResponse.devices)
     }
 
-    func clients(limit: Int = 0) async throws -> [UnifiClient]
+    func clients(limit: Int = 0) async throws -> Set<UnifiClient>
     {
         let limit = limit > 0 ? limit : self.limit
-        let path =  "/proxy/network/integrations/v1/sites/\(siteId)/clients?limit=\(limit)"
-        return try await retrieveAndParse(path: path, type: UnifiClientsResponse.self).data
+        let path = "/proxy/network/integrations/v1/sites/\(siteId)/clients?limit=\(limit)"
+        let unifiClients = try await retrieveAndParse(path: path, type: UnifiClientsResponse.self).data
+        return Set(unifiClients)
     }
 
-    func devices() async throws -> [UnifiDevice]
+    func devices() async throws -> Set<UnifiDevice>
     {
-        let path =  "/proxy/network/integrations/v1/sites/\(siteId)/devices?limit=\(limit)"
-        return try await retrieveAndParse(path: path, type: UnifiDevicesResponse.self).data
+        let path = "/proxy/network/integrations/v1/sites/\(siteId)/devices?limit=\(limit)"
+        let unifiDevices = try await retrieveAndParse(path: path, type: UnifiDevicesResponse.self).data
+        return Set(unifiDevices)
     }
 
     func deviceDetails(for device: UnifiDevice) async throws -> UnifiDeviceDetail
     {
-        let path =  "/proxy/network/integrations/v1/sites/\(siteId)/devices/\(device.id)"
+        let path = "/proxy/network/integrations/v1/sites/\(siteId)/devices/\(device.id)"
         let unifiDeviceDetail = try await retrieveAndParse(path: path, type: UnifiDeviceDetail.self)
         return unifiDeviceDetail
     }

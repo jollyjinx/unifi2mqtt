@@ -30,11 +30,11 @@ extension UnifiDevice: Hashable, Equatable
     }
 }
 
-extension UnifiDevice
+public extension UnifiDevice
 {
-    public func isEqual(to other: UnifiDevice) -> Bool
+    func isEqual(to other: UnifiDevice) -> Bool
     {
-        if     id == other.id
+        if id == other.id
             && name == other.name
             && model == other.model
             && macAddress == other.macAddress

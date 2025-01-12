@@ -13,12 +13,12 @@ import NIOHTTP1
 @MainActor
 public final class UnifiHost
 {
-    internal let hostRetriever: UnifiHostRetriever
-    internal let requestInterval: TimeInterval
-    internal let refreshInterval: TimeInterval
+    let hostRetriever: UnifiHostRetriever
+    let requestInterval: TimeInterval
+    let refreshInterval: TimeInterval
 
-    internal lazy var staleTime : TimeInterval = { max(refreshInterval - ( requestInterval * 1.1 ), 0.0) }()
-    internal var staleDate : Date { Date().addingTimeInterval(-staleTime) }
+    lazy var staleTime: TimeInterval = max(refreshInterval - (requestInterval * 1.1), 0.0)
+    var staleDate: Date { Date().addingTimeInterval(-staleTime) }
 
     private let oldDevicesObservable = Observable<Set<Device>>()
     private let clientsObservable = Observable<Set<UnifiClient>>()
@@ -50,7 +50,8 @@ public final class UnifiHost
         let client: UnifiClient
         let lastUpdate: Date
     }
-    private var clientCache: [String:ClientCacheEntry] = [:]
+
+    private var clientCache: [String: ClientCacheEntry] = [:]
 
     struct DeviceCacheEntry: Sendable, Hashable, Equatable
     {
@@ -58,18 +59,17 @@ public final class UnifiHost
         let lastUpdate: Date
     }
 
-    private var deviceCache: [String:DeviceCacheEntry] = [:]
+    private var deviceCache: [String: DeviceCacheEntry] = [:]
 
     public var lastUpdateOldDevices: Date = .distantPast
     public var lastUpdateDeviceDetails: Date = .distantPast
-
 
     public var shouldRefreshOldDevices: Bool { lastUpdateOldDevices < Date() - refreshInterval }
     public var shouldRefreshDevicedetails: Bool { lastUpdateDeviceDetails < Date() - refreshInterval }
 
     public init(host: String, apiKey: String, siteId: String?, requestInterval: TimeInterval = 60.0, refreshInterval: TimeInterval = 120.0, limit: Int = 100_000, timeout: TimeAmount = .seconds(5)) async throws
     {
-        self.hostRetriever = try await UnifiHostRetriever(host: host, apiKey: apiKey, siteId: siteId, limit:limit, httpTimeout: timeout)
+        hostRetriever = try await UnifiHostRetriever(host: host, apiKey: apiKey, siteId: siteId, limit: limit, httpTimeout: timeout)
         self.requestInterval = requestInterval
         self.refreshInterval = refreshInterval
     }
@@ -98,6 +98,11 @@ public final class UnifiHost
         }
     }
 
+    public var networks: Set<IPv4Network>
+    {
+        Set(oldDevices.compactMap(\.networks).joined())
+    }
+
     public func observeOldDevices() -> AsyncStream<Set<Device>>
     {
         oldDevicesObservable.observe()
@@ -123,45 +128,36 @@ extension UnifiHost
 {
     func updateOldDevices() async throws
     {
-        let deviceResponse = try await hostRetriever.oldDevices()
-        let newDevicesResponse = Set(deviceResponse.devices)
+        let retrievedDevices = try await hostRetriever.oldDevices()
 
-        if newDevicesResponse != oldDevices || shouldRefreshOldDevices
+        if retrievedDevices != oldDevices || shouldRefreshOldDevices
         {
-            oldDevices = newDevicesResponse
+            oldDevices = retrievedDevices
             lastUpdateOldDevices = Date()
         }
     }
 
-    public var networks: Set<IPv4Network>
-    {
-        Set(oldDevices.compactMap(\.networks).joined())
-    }
-
-
     func updateClients() async throws
     {
-        let unifiClientsArray = try await hostRetriever.clients()
+        let retrievedClients = try await hostRetriever.clients()
 
         var newClientSet = Set<UnifiClient>()
-
         var knownCounter = 0
-        unifiClientsArray.forEach
-        {
-            client in
 
+        for client in retrievedClients
+        {
             if let cacheEntry = clientCache[client.macAddress]
             {
                 knownCounter += 1
-                guard cacheEntry.lastUpdate < staleDate else { return }
-                guard !cacheEntry.client.isEqual(to:client) else { return }
+                guard cacheEntry.lastUpdate < staleDate else { continue }
+                guard !cacheEntry.client.isEqual(to: client) else { continue }
             }
             newClientSet.insert(client)
             clientCache[client.macAddress] = ClientCacheEntry(client: client, lastUpdate: Date())
         }
         clientCache = clientCache.filter { $0.value.lastUpdate > staleDate }
 
-        JLog.debug("Refresh got clients:\(unifiClientsArray.count) cache:\(clientCache.count) newClientSet:\(newClientSet.count) old clients:\(clients.count) known:\(knownCounter)")
+        JLog.debug("Refresh got clients:\(retrievedClients.count) cache:\(clientCache.count) newClientSet:\(newClientSet.count) old clients:\(clients.count) known:\(knownCounter)")
         JLog.debug("new clients \(newClientSet.map(\.name).sorted().joined(separator: ","))")
 
         if !newClientSet.isEmpty
@@ -172,26 +168,24 @@ extension UnifiHost
 
     func updateDevices() async throws
     {
-        let unifiDevicesArray = try await hostRetriever.devices()
+        let retrievedDevices = try await hostRetriever.devices()
 
         var newDevicesSet = Set<UnifiDevice>()
-            var knownCounter = 0
+        var knownCounter = 0
 
-        unifiDevicesArray.forEach
+        for device in retrievedDevices
         {
-            device in
-
             if let cacheEntry = deviceCache[device.macAddress]
             {
                 knownCounter += 1
-                guard cacheEntry.lastUpdate < staleDate else { return }
-                guard !cacheEntry.device.isEqual(to:device) else { return }
+                guard cacheEntry.lastUpdate < staleDate else { continue }
+                guard !cacheEntry.device.isEqual(to: device) else { continue }
             }
             newDevicesSet.insert(device)
             deviceCache[device.macAddress] = DeviceCacheEntry(device: device, lastUpdate: Date())
         }
         deviceCache = deviceCache.filter { $0.value.lastUpdate > staleDate }
-        JLog.debug("Refresh got devices:\(unifiDevicesArray.count) cache:\(deviceCache.count) newDeviceSet:\(newDevicesSet.count) old devices:\(devices.count) known:\(knownCounter)")
+        JLog.debug("Refresh got devices:\(retrievedDevices.count) cache:\(deviceCache.count) newDeviceSet:\(newDevicesSet.count) old devices:\(devices.count) known:\(knownCounter)")
         JLog.debug("new devices \(newDevicesSet.map(\.name).sorted().joined(separator: ","))")
 
         if !newDevicesSet.isEmpty
@@ -208,8 +202,8 @@ extension UnifiHost
         {
             do
             {
-                let unifiDeviceDetail = try await hostRetriever.deviceDetails(for: device)
-                newDeviceDetails.insert(unifiDeviceDetail)
+                let retrievedDetails = try await hostRetriever.deviceDetails(for: device)
+                newDeviceDetails.insert(retrievedDetails)
             }
             catch
             {

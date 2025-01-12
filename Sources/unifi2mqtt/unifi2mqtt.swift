@@ -149,8 +149,9 @@ struct unifi2mqtt: AsyncParsableCommand
                         }
                         else
                         {
-                            JLog.debug( "Can't update hostsbynetwork: no ipAddress found \(client.description)")
+                            JLog.debug("Can't update hostsbynetwork: no ipAddress found \(client.description)")
                         }
+
                     default: break
                 }
             }

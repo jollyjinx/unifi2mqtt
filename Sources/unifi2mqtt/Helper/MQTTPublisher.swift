@@ -7,7 +7,6 @@ import JLog
 import MQTTNIO
 import NIO
 
-
 public actor MQTTPublisher
 {
     enum MQTTClientError: Swift.Error
@@ -50,7 +49,7 @@ public actor MQTTPublisher
         guard timenow.timeIntervalSince(lasttime) > emitInterval else { return }
         lasttimeused[topic] = timenow
 
-        if self.jsonOutput
+        if jsonOutput
         {
             print("{\"topic\":\"\(topic)\",\"payload\":\(payload)}")
         }
@@ -60,12 +59,12 @@ public actor MQTTPublisher
         {
             sendcounter -= 1
 
-            if !self.mqttClient.isActive()
+            if !mqttClient.isActive()
             {
                 do
                 {
                     JLog.debug("mqttClient.is NOT Active")
-                    guard try await self.mqttClient.connect() else { throw MQTTClientError.connectFailed }
+                    guard try await mqttClient.connect() else { throw MQTTClientError.connectFailed }
                 }
                 catch
                 {
@@ -81,7 +80,7 @@ public actor MQTTPublisher
                     JLog.debug("publish:\(topic)")
                     JLog.trace("publish:\(topic) payload:\(payload)")
 
-                    try await self.mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
+                    try await mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
                     sent = true
                 }
                 catch
@@ -108,6 +107,5 @@ public actor MQTTPublisher
 //            JLog.debug("publish:\(topic)")
 //            JLog.trace("publish:\(topic) payload:\(payload)")
 //            let published = tr self.mqttClient.publish(to: topic, payload: byteBuffer, qos: qos, retain: retain)
-
     }
 }

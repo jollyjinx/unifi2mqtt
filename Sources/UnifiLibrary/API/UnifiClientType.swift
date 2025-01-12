@@ -2,7 +2,7 @@
 //  UnifiClientType.swift
 //
 
-public enum UnifiClientType:  Sendable, Equatable
+public enum UnifiClientType: Sendable, Equatable
 {
     case wired
     case wireless
@@ -44,10 +44,10 @@ extension UnifiClientType: Codable
 
         switch value
         {
-            case CodingKeys.wired.rawValue     : self = .wired
-            case CodingKeys.wireless.rawValue  : self = .wireless
-            case CodingKeys.vpn.rawValue       : self = .vpn
-            case CodingKeys.teleport.rawValue  : self = .teleport
+            case CodingKeys.wired.rawValue: self = .wired
+            case CodingKeys.wireless.rawValue: self = .wireless
+            case CodingKeys.vpn.rawValue: self = .vpn
+            case CodingKeys.teleport.rawValue: self = .teleport
             default: self = .unknownKey(value)
         }
     }
@@ -65,4 +65,3 @@ extension UnifiClientType: Codable
         }
     }
 }
-

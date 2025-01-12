@@ -17,23 +17,22 @@ public struct UnifiClient: Sendable
     public let lastSeen: Date? // currently not in json so it will be generated on the fly
 }
 
-extension UnifiClient
+public extension UnifiClient
 {
-    public func isEqual(to other: UnifiClient) -> Bool
+    func isEqual(to other: UnifiClient) -> Bool
     {
-        if      type == other.type
-            &&  ipAddress == other.ipAddress
-            &&  id == other.id
-            &&  name == other.name
-            &&  connectedAt == other.connectedAt
-            &&  macAddress == other.macAddress
+        if type == other.type
+            && ipAddress == other.ipAddress
+            && id == other.id
+            && name == other.name
+            && connectedAt == other.connectedAt
+            && macAddress == other.macAddress
         {
             return true
         }
         return false
     }
 }
-
 
 extension UnifiClient: Hashable, Equatable
 {
