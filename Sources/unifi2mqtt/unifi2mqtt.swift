@@ -25,7 +25,7 @@ struct unifi2mqtt: AsyncParsableCommand
 
     @Option(name: .long, help: "Unifi hostname") var unifiHostname: String = "unifi"
     @Option(name: .long, help: "Unifi port") var unifiPort: UInt16 = 8443
-    @Option(name: .long, help: "Unifi API key") var unifiAPIKey: String = { ProcessInfo.processInfo.environment["UNIFI_API_KEY"] ?? "" }()
+    @Option(name: .long, help: "UniFi API key. This key can also be provided via the UNIFI_API_KEY environment variable") var unifiAPIKey: String = { ProcessInfo.processInfo.environment["UNIFI_API_KEY"] ?? "" }()
     @Option(name: .long, help: "Unifi site id") var unifiSiteId: String? = nil
 
     #if DEBUG
