@@ -71,15 +71,3 @@ extension UnifiClient: Codable
         }
     }
 }
-
-// public extension UnifiClient
-// {
-//    var network: String?
-//    {
-//        if let ipAddress
-//        {
-//            return IPv4Network(ipAddress)?.name
-//        }
-//        else { return nil }
-//    }
-// }
