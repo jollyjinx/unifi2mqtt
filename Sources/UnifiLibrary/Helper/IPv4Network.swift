@@ -3,74 +3,145 @@
 //
 
 import Foundation
-import RegexBuilder
 
-import Foundation
-
-public struct IPv4Network: Hashable, Sendable
+public enum IPv4
 {
-    public let name: String
-    private let networkAddress: UInt32
-    private let subnetMask: Mask
-
-    struct Mask: Hashable
+    public struct Netmask: Sendable, Hashable, CustomStringConvertible
     {
-        let bits: UInt32
-        let number: UInt8
+        public let prefixlength: UInt8
+
+        public var description : String { String(prefixlength) }
     }
 
-    public init?(_ cidr: String)
+    public struct Address : Sendable, Hashable, CustomStringConvertible
     {
-        guard let (address, mask) = IPv4Network.networkStringToUAddress(cidr) else { return nil }
-        networkAddress = address
-        subnetMask = mask
-        name = IPv4Network.addressToString(address & mask.bits) + "/" + String(mask.number)
+        public let bits: UInt32
+
+        public var description: String { IPv4.addressIntToString(bits) }
     }
 
-    public func contains(ip address: String) -> Bool
+    public struct Network : Sendable, Hashable, CustomStringConvertible
     {
-        guard let address = IPv4Network.stringToUAddress(address) else { return false }
-        return (address & subnetMask.bits) == networkAddress
+        public let address: Address
+        public let netmask: Netmask
+
+        public var gateway: Address { address }
+        public var network: Network { Network(address:Address(bits:address.bits & netmask.bits) , netmask:netmask) }
+        public var description: String { "\(address)/\(netmask)" }
     }
 }
 
-extension IPv4Network
+public extension IPv4.Netmask
 {
-    static func networkStringToUAddress(_ cidr: String) -> (address: UInt32, mask: Mask)?
+    init(bitmask: UInt32)
     {
-        let components = cidr.split(separator: "/")
-        guard components.count == 2 else { return nil }
+        self.prefixlength = UInt8(32 - bitmask.leadingZeroBitCount)
+    }
 
-        guard let address = IPv4Network.stringToUAddress(String(components[0])),
-              let mask = IPv4Network.stringToMask(String(components[1]))
+    init?(_ string: String)
+    {
+        if string.count > 2
+        {
+            guard let bitmask = IPv4.addressStringToInt(string) else { return nil }
+            self.init(bitmask: bitmask)
+        }
+        else
+        {
+            guard let number = UInt8(string) else { return nil }
+            self.init(prefixlength: number)
+        }
+    }
+
+    var bits: UInt32 { ~UInt32(0) << (32 - prefixlength) }
+}
+
+public extension IPv4.Address
+{
+    init?(_ string: String)
+    {
+        guard let bits = IPv4.addressStringToInt(string) else { return nil }
+        self.init(bits: bits)
+    }
+}
+
+public extension IPv4.Network
+{
+    init?(_ cidrString: String)
+    {
+        let components = cidrString.split(separator: "/")
+        guard components.count == 2 else { return nil }
+        
+        guard let address = IPv4.Address( String(components[0]) ),
+              let netmask = IPv4.Netmask( String(components[1]) )
         else { return nil }
 
-        return (address: address & mask.bits, mask: mask)
+        self.address = address
+        self.netmask = netmask
     }
 
-    static func stringToMask(_ mask: String) -> Mask?
+    func contains(_ testAddress: IPv4.Address) -> Bool
     {
-        guard let prefixLength = UInt(mask), prefixLength > 8 else { return nil }
-        let mask = (prefixLength == 0 ? 0 : ~UInt32(0) << (32 - prefixLength))
-        return Mask(bits: mask, number: UInt8(prefixLength))
+        testAddress.bits & netmask.bits == address.bits & netmask.bits
     }
+}
 
-    static func stringToUAddress(_ ip: String) -> UInt32?
+public extension IPv4
+{
+    static func addressStringToInt(_ addressString: String) -> UInt32?
     {
-        let components = ip.split(separator: ".").map { UInt8($0) ?? 0 }
+        let components = addressString.split(separator: ".").map { UInt8($0) ?? 0 }
         guard components.count == 4 else { return nil }
         let value = components.reduce(0) { sum, component in UInt32(sum) << 8 | UInt32(component) }
 
         return value
     }
 
-    static func addressToString(_ hostValue: UInt32) -> String
+    static func addressIntToString(_ addressInt32: UInt32) -> String
     {
-        let byte1 = (hostValue >> 24) & 0xFF
-        let byte2 = (hostValue >> 16) & 0xFF
-        let byte3 = (hostValue >> 8) & 0xFF
-        let byte4 = hostValue & 0xFF
+        let byte1 = (addressInt32 >> 24) & 0xFF
+        let byte2 = (addressInt32 >> 16) & 0xFF
+        let byte3 = (addressInt32 >> 8) & 0xFF
+        let byte4 = addressInt32 & 0xFF
 
         return "\(byte1).\(byte2).\(byte3).\(byte4)"
+    }
+}
+
+extension IPv4.Network : Codable
+{
+    public func encode(to encoder: any Encoder) throws
+    {
+        var container = encoder.singleValueContainer()
+
+        try container.encode( "\(address)/\(netmask)" )
+    }
+
+    public init(from decoder: any Decoder) throws
+    {
+        let container = try decoder.singleValueContainer()
+        let cidr = try container.decode(String.self)
+        guard let network = IPv4.Network(cidr) else
+        {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid network address \(cidr)")
+        }
+        self = network
+    }
+}
+
+extension IPv4.Address : Codable
+{
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode( description )
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let value = try container.decode(String.self)
+        guard let address = IPv4.Address(value) else
+        {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid address \(value)")
+        }
+        self = address
     }
 }

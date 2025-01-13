@@ -120,9 +120,12 @@ struct unifi2mqtt: AsyncParsableCommand
     {
         let networks = unifiHost.networks
 
+        var hasPublishedNetwork : [ ReportedNetwork: Bool ] = [:]
+
         for client in clients
         {
             JLog.debug("Updating client \(client.name)")
+
             for publishingOption in publishingOptions.options
             {
                 switch publishingOption
@@ -144,8 +147,15 @@ struct unifi2mqtt: AsyncParsableCommand
                         }
                         else if let ipAddress = client.ipAddress
                         {
-                            if let network = networks.first(where: { $0.contains(ip: ipAddress) })?.name
+                            if let reportedNetwork = networks.first(where: { $0.network?.contains(ipAddress) ?? false}),
+                               let network = reportedNetwork.network
                             {
+                                if !hasPublishedNetwork[reportedNetwork, default: false]
+                                {
+                                    try await mqttPublisher.publish(to: [publishingOption.rawValue, network], payload: reportedNetwork.json, qos: .atMostOnce, retain: retain)
+                                    hasPublishedNetwork[reportedNetwork] = true
+                                }
+
                                 try await mqttPublisher.publish(to: [publishingOption.rawValue, network, ipAddress], payload: client.json, qos: .atMostOnce, retain: retain)
                             }
                             else

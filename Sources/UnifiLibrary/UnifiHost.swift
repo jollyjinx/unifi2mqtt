@@ -91,9 +91,9 @@ public final class UnifiHost
         }
     }
 
-    public var networks: Set<IPv4Network>
+    public var networks: Set<ReportedNetwork>
     {
-        Set(oldDevices.compactMap(\.networks).joined())
+        Set(oldDevices.compactMap(\.reported_networks).joined())
     }
 
     public func observeOldDevices() -> AsyncStream<Set<Device>>
