@@ -1,5 +1,5 @@
 //
-//  UnifiDeviceDecodingTests.swift
+//  OldDevicesDecodingTests..swift
 //
 
 //
@@ -27,5 +27,4 @@ struct OldUnifiDeviceDecodingTests
         let device = try decoder.decode(Device.self, from: data)
         #expect(device.reported_networks?.count ?? 0 == 2)
     }
-
 }

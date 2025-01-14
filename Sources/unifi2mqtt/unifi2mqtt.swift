@@ -25,7 +25,7 @@ struct unifi2mqtt: AsyncParsableCommand
 
     @Option(name: .long, help: "Unifi hostname") var unifiHostname: String = "unifi"
     @Option(name: .long, help: "Unifi port") var unifiPort: UInt16 = 8443
-    @Option(name: .long, help: "UniFi API key. This key can also be provided via the UNIFI_API_KEY environment variable") var unifiAPIKey: String = { ProcessInfo.processInfo.environment["UNIFI_API_KEY"] ?? "" }()
+    @Option(name: .long, help: "UniFi API key. This key can also be provided via the UNIFI_API_KEY environment variable") var unifiAPIKey: String = ProcessInfo.processInfo.environment["UNIFI_API_KEY"] ?? ""
     @Option(name: .long, help: "Unifi site id") var unifiSiteId: String? = nil
 
     #if DEBUG
@@ -71,7 +71,7 @@ struct unifi2mqtt: AsyncParsableCommand
         {
             case missingEnvironmentVariable(String)
         }
-        guard !unifiAPIKey.isEmpty else {  throw ValidationError("UniFi API Key not set.\n\n\(unifi2mqtt.helpMessage())") }
+        guard !unifiAPIKey.isEmpty else { throw ValidationError("UniFi API Key not set.\n\n\(unifi2mqtt.helpMessage())") }
 
         let mqttPublisher = try await MQTTPublisher(hostname: mqttHostname, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: minimumEmitInterval, baseTopic: basetopic, jsonOutput: jsonOutput)
 
@@ -120,7 +120,7 @@ struct unifi2mqtt: AsyncParsableCommand
     {
         let networks = unifiHost.networks
 
-        var hasPublishedNetwork : [ ReportedNetwork: Bool ] = [:]
+        var hasPublishedNetwork: [ReportedNetwork: Bool] = [:]
 
         for client in clients
         {
@@ -147,7 +147,7 @@ struct unifi2mqtt: AsyncParsableCommand
                         }
                         else if let ipAddress = client.ipAddress
                         {
-                            if let reportedNetwork = networks.first(where: { $0.network?.contains(ipAddress) ?? false}),
+                            if let reportedNetwork = networks.first(where: { $0.network?.contains(ipAddress) ?? false }),
                                let network = reportedNetwork.network
                             {
                                 if !hasPublishedNetwork[reportedNetwork, default: false]

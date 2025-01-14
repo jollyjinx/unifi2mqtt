@@ -141,8 +141,8 @@ extension UnifiHost
         for client in retrievedClients
         {
             if let cacheEntry = clientCache[client.macAddress],
-                cacheEntry.entry.isEqual(to: client),            // has not changed
-                cacheEntry.lastUpdate > staleDate                // not stale
+               cacheEntry.entry.isEqual(to: client), // has not changed
+               cacheEntry.lastUpdate > staleDate // not stale
             {
                 newCache[client.macAddress] = cacheEntry
                 continue
@@ -172,8 +172,8 @@ extension UnifiHost
         for device in retrievedDevices
         {
             if let cacheEntry = deviceCache[device.macAddress],
-                cacheEntry.entry.isEqual(to: device),            // has not changed
-                cacheEntry.lastUpdate > staleDate                // not stale
+               cacheEntry.entry.isEqual(to: device), // has not changed
+               cacheEntry.lastUpdate > staleDate // not stale
             {
                 newCache[device.macAddress] = cacheEntry
                 continue

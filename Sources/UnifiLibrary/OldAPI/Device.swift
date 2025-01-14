@@ -30,4 +30,3 @@ extension Device: Hashable, Equatable
         return lhs.mac == rhs.mac
     }
 }
-

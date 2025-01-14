@@ -1,9 +1,7 @@
 //
 //  ReportedNetwork.swift
-//  unifi2mqtt
 //
-//  Created by Patrick Stein on 13.01.25.
-//
+
 import Foundation
 
 public struct ReportedNetwork: Sendable, Hashable, Equatable
@@ -12,25 +10,26 @@ public struct ReportedNetwork: Sendable, Hashable, Equatable
     public let address: IPv4.Network?
 }
 
-extension ReportedNetwork
+public extension ReportedNetwork
 {
-    public var gateway: IPv4.Address?  { address?.gateway }
-    public var network: IPv4.Network?  { address?.network }
+    var gateway: IPv4.Address? { address?.gateway }
+    var network: IPv4.Network? { address?.network }
 }
 
-extension ReportedNetwork : Codable
+extension ReportedNetwork: Codable
 {
     enum DeCodingKeys: String, CodingKey
     {
         case name
         case address
     }
+
     enum EncodingKeys: String, CodingKey
     {
         case name
         case address
-        case gateway    // own addition
-        case network    // own addition
+        case gateway // own addition
+        case network // own addition
     }
 
     public init(from decoder: Decoder) throws
@@ -50,4 +49,3 @@ extension ReportedNetwork : Codable
         try container.encode(network, forKey: EncodingKeys.network)
     }
 }
-

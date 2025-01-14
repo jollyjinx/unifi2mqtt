@@ -10,23 +10,23 @@ public enum IPv4
     {
         public let prefixlength: UInt8
 
-        public var description : String { String(prefixlength) }
+        public var description: String { String(prefixlength) }
     }
 
-    public struct Address : Sendable, Hashable, CustomStringConvertible
+    public struct Address: Sendable, Hashable, CustomStringConvertible
     {
         public let bits: UInt32
 
         public var description: String { IPv4.addressIntToString(bits) }
     }
 
-    public struct Network : Sendable, Hashable, CustomStringConvertible
+    public struct Network: Sendable, Hashable, CustomStringConvertible
     {
         public let address: Address
         public let netmask: Netmask
 
         public var gateway: Address { address }
-        public var network: Network { Network(address:Address(bits:address.bits & netmask.bits) , netmask:netmask) }
+        public var network: Network { Network(address: Address(bits: address.bits & netmask.bits), netmask: netmask) }
         public var description: String { "\(address)/\(netmask)" }
     }
 }
@@ -35,7 +35,7 @@ public extension IPv4.Netmask
 {
     init(bitmask: UInt32)
     {
-        self.prefixlength = UInt8(32 - bitmask.leadingZeroBitCount)
+        prefixlength = UInt8(32 - bitmask.leadingZeroBitCount)
     }
 
     init?(_ string: String)
@@ -70,9 +70,9 @@ public extension IPv4.Network
     {
         let components = cidrString.split(separator: "/")
         guard components.count == 2 else { return nil }
-        
-        guard let address = IPv4.Address( String(components[0]) ),
-              let netmask = IPv4.Netmask( String(components[1]) )
+
+        guard let address = IPv4.Address(String(components[0])),
+              let netmask = IPv4.Netmask(String(components[1]))
         else { return nil }
 
         self.address = address
@@ -107,20 +107,21 @@ public extension IPv4
     }
 }
 
-extension IPv4.Network : Codable
+extension IPv4.Network: Codable
 {
     public func encode(to encoder: any Encoder) throws
     {
         var container = encoder.singleValueContainer()
 
-        try container.encode( "\(address)/\(netmask)" )
+        try container.encode("\(address)/\(netmask)")
     }
 
     public init(from decoder: any Decoder) throws
     {
         let container = try decoder.singleValueContainer()
         let cidr = try container.decode(String.self)
-        guard let network = IPv4.Network(cidr) else
+        guard let network = IPv4.Network(cidr)
+        else
         {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid network address \(cidr)")
         }
@@ -128,17 +129,20 @@ extension IPv4.Network : Codable
     }
 }
 
-extension IPv4.Address : Codable
+extension IPv4.Address: Codable
 {
-    public func encode(to encoder: any Encoder) throws {
+    public func encode(to encoder: any Encoder) throws
+    {
         var container = encoder.singleValueContainer()
-        try container.encode( description )
+        try container.encode(description)
     }
 
-    public init(from decoder: any Decoder) throws {
+    public init(from decoder: any Decoder) throws
+    {
         let container = try decoder.singleValueContainer()
         let value = try container.decode(String.self)
-        guard let address = IPv4.Address(value) else
+        guard let address = IPv4.Address(value)
+        else
         {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid address \(value)")
         }
