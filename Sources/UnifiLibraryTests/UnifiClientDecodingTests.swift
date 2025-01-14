@@ -2,12 +2,6 @@
 //  UnifiClientDecodingTests.swift
 //
 
-//
-//  ClientDecodingTests.swift
-//  unifi2mqtt
-//
-//  Created by Patrick Stein on 11.01.25.
-//
 import Foundation
 import Testing
 
