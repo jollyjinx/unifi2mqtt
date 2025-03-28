@@ -14,8 +14,10 @@ struct PublishingOptions: CustomStringConvertible
         options.sorted(by: <).map(\.description).joined(separator: ", ")
     }
 
-    static var allCases: [PublishingOption] { PublishingOption.allCases }
-    static var defaultValueDescription: String { allCases.map(\.description).joined(separator: ",") }
+    init(options: [PublishingOption])
+    {
+        self.options = Set(options)
+    }
 }
 
 enum PublishingOption: String, CaseIterable, CustomStringConvertible

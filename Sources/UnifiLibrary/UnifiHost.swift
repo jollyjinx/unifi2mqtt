@@ -121,6 +121,8 @@ extension UnifiHost
 {
     func updateOldDevices() async throws
     {
+        JLog.debug("begin"); defer { JLog.debug("end") }
+
         let retrievedDevices = try await hostRetriever.oldDevices()
 
         if retrievedDevices != oldDevices || shouldRefreshOldDevices
@@ -132,6 +134,8 @@ extension UnifiHost
 
     func updateClients() async throws
     {
+        JLog.debug("begin"); defer { JLog.debug("end") }
+
         let retrievedClients = try await hostRetriever.clients()
 
         var clientsToPublish = Set<UnifiClient>()
@@ -163,6 +167,8 @@ extension UnifiHost
 
     func updateDevices() async throws
     {
+        JLog.debug("begin"); defer { JLog.debug("end") }
+
         let retrievedDevices = try await hostRetriever.devices()
 
         var devicesToPublish = Set<UnifiDevice>()
@@ -194,6 +200,8 @@ extension UnifiHost
 
     func updateDevicesDetails() async throws
     {
+        JLog.debug("begin"); defer { JLog.debug("end") }
+
         var newDeviceDetails: Set<UnifiDeviceDetail> = []
 
         for device in devices
@@ -202,6 +210,7 @@ extension UnifiHost
             {
                 let retrievedDetails = try await hostRetriever.deviceDetails(for: device)
                 newDeviceDetails.insert(retrievedDetails)
+                JLog.debug("retrieved details \(retrievedDetails)")
             }
             catch
             {

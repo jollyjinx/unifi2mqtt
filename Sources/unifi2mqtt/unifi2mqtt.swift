@@ -36,10 +36,11 @@ struct unifi2mqtt: AsyncParsableCommand
     @Option(name: .long, help: ArgumentHelp("Specify publishing options as a comma-separated list.",
                                             discussion: """
                                             Available options: 
-                                            - \(PublishingOptions.allCases.map { $0.rawValue + ": " + $0.help }.joined(separator: "\n- "))
+                                            - \(PublishingOption.allCases.map { $0.rawValue + ": " + $0.help }.joined(separator: "\n- "))
                                             """,
                                             valueName: "options")) var publishingOptions: PublishingOptions = .init(options: [.hostsbynetwork, .olddevicesbytype])
 
+//                                            valueName: "options")) var publishingOptions: PublishingOptions = PublishingOptions(options:PublishingOption.allCases)
     @Option(name: .long, help: "MQTT Server hostname") var mqttHostname: String = "mqtt"
     @Option(name: .long, help: "MQTT Server port") var mqttPort: UInt16 = 1883
     @Option(name: .long, help: "MQTT Server username") var mqttUsername: String = "mqtt"
