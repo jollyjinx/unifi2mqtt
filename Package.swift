@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(name: "unifi2mqtt",
                       platforms: [
-                          .macOS(.v14),
+                          .macOS(.v15),
                       ],
                       dependencies: [
                           .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMajor(from: "1.2.2")),

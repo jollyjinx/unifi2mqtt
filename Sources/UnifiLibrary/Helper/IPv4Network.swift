@@ -4,6 +4,7 @@
 
 import Foundation
 
+
 public enum IPv4
 {
     public struct Netmask: Sendable, Hashable, CustomStringConvertible

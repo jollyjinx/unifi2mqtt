@@ -11,7 +11,7 @@ public struct UnifiClient: Sendable
     public let id: UUID
     public let name: String
     public let connectedAt: Date
-    public let ipAddress: IPv4.Address?
+    public let ipAddress: JNXIPAddress?
     public let macAddress: MACAddress
 
     public let lastSeen: Date? // currently not in json so it will be generated on the fly
@@ -59,7 +59,7 @@ extension UnifiClient: Codable
             id = try container.decode(UUID.self, forKey: .id)
             name = try container.decode(String.self, forKey: .name)
             connectedAt = try container.decode(Date.self, forKey: .connectedAt)
-            ipAddress = try? container.decode(IPv4.Address.self, forKey: .ipAddress)
+            ipAddress = try? container.decode(JNXIPAddress.self, forKey: .ipAddress)
             macAddress = try container.decode(MACAddress.self, forKey: .macAddress)
 
             lastSeen = (try? container.decode(Date.self, forKey: .lastSeen)) ?? Date()
