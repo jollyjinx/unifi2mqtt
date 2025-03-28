@@ -57,7 +57,7 @@ extension UnifiHostRetriever
         {
             bodyData.append(Data(buffer: buffer))
         }
-        JLog.trace("result: \(String(data: bodyData, encoding: .utf8) ?? "nil")")
+        JLog.trace("\npath:\(path)\nresult:\n\(String(data: bodyData, encoding: .utf8) ?? "nil")\n\n")
         return bodyData
     }
 

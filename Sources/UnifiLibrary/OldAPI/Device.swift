@@ -16,6 +16,7 @@ public struct Device: Codable, Sendable
     public let ip: IPv4.Address
     public let startup_timestamp: Date?
     public let reported_networks: [ReportedNetwork]?
+    public let network_table: [NetworkTable]?
 }
 
 extension Device: Hashable, Equatable

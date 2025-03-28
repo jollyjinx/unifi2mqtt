@@ -4,7 +4,6 @@
 
 import Foundation
 
-
 public enum IPv4
 {
     public struct Netmask: Sendable, Hashable, CustomStringConvertible
@@ -124,7 +123,7 @@ extension IPv4.Network: Codable
         guard let network = IPv4.Network(cidr)
         else
         {
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid network address \(cidr)")
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid IPv4 network address \(cidr)")
         }
         self = network
     }
@@ -145,7 +144,7 @@ extension IPv4.Address: Codable
         guard let address = IPv4.Address(value)
         else
         {
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid address \(value)")
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid IPv4 address \(value)")
         }
         self = address
     }

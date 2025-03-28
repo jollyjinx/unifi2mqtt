@@ -27,11 +27,10 @@ let package = Package(name: "unifi2mqtt",
                                   ]),
                           .testTarget(name: "UnifiLibraryTests",
                                       dependencies: [
-                                            "UnifiLibrary",
+                                          "UnifiLibrary",
                                           .product(name: "JLog", package: "JLog"),
                                       ],
-                                        resources: [
-                                            .copy("Resources"),
-                                        ]
-                                ),
+                                      resources: [
+                                          .copy("Resources"),
+                                      ]),
                       ])

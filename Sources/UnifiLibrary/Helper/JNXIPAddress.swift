@@ -1,14 +1,10 @@
 //
 //  JNXIPAddress.swift
-//  unifi2mqtt
 //
-//  Created by Patrick Stein on 28.03.25.
-//
-
 
 import Foundation
 
-public enum JNXIPAddress : Sendable, Codable
+public enum JNXIPAddress: Sendable, Codable
 {
     case ipv4(IPv4.Address)
     case ipv6(IPv6.Address)
@@ -21,8 +17,8 @@ extension JNXIPAddress: CustomStringConvertible
     {
         switch self
         {
-        case .ipv4(let address): return address.description
-        case .ipv6(let address): return address.description
+            case let .ipv4(address): return address.description
+            case let .ipv6(address): return address.description
         }
     }
 }
@@ -56,12 +52,11 @@ public extension JNXIPAddress
         var container = encoder.singleValueContainer()
         switch self
         {
-        case .ipv4(let address): try container.encode(address)
-        case .ipv6(let address): try container.encode(address)
+            case let .ipv4(address): try container.encode(address)
+            case let .ipv6(address): try container.encode(address)
         }
     }
 }
-
 
 // equatable
 extension JNXIPAddress: Equatable
@@ -70,9 +65,9 @@ extension JNXIPAddress: Equatable
     {
         switch (lhs, rhs)
         {
-        case (.ipv4(let l), .ipv4(let r)): return l == r
-        case (.ipv6(let l), .ipv6(let r)): return l == r
-        default: return false
+            case let (.ipv4(l), .ipv4(r)): return l == r
+            case let (.ipv6(l), .ipv6(r)): return l == r
+            default: return false
         }
     }
 }

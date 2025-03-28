@@ -120,7 +120,7 @@ struct unifi2mqtt: AsyncParsableCommand
     {
         let networks = unifiHost.networks
 
-        var hasPublishedNetwork: [ReportedNetwork: Bool] = [:]
+        var hasPublishedNetwork: [NetworkTable: Bool] = [:]
 
         for client in clients
         {
@@ -147,8 +147,8 @@ struct unifi2mqtt: AsyncParsableCommand
                         }
                         else if let ipAddress = client.ipAddress
                         {
-                            if let reportedNetwork = networks.first(where: { $0.network?.contains(ipAddress) ?? false }),
-                               let network = reportedNetwork.network
+                            if let reportedNetwork = networks.first(where: { $0.contains(ip: ipAddress) }),
+                               let network = reportedNetwork.ip_subnet
                             {
                                 if !hasPublishedNetwork[reportedNetwork, default: false]
                                 {
