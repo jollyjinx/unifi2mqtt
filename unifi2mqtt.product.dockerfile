@@ -4,7 +4,7 @@ COPY . .
 RUN swift build -c release
 RUN chmod -R u+rwX,go+rX-w /swift/.build/release/
 
-FROM --platform=$TARGETPLATFORM swift:slim
+FROM swift:slim
 WORKDIR /unifi2mqtt
 ENV PATH="$PATH:/unifi2mqtt"
 COPY --from=builder /swift/.build/release/unifi2mqtt .
@@ -24,8 +24,9 @@ CMD ["unifi2mqtt"]
 
 
 # multiarch build:
-#
+# rm -rf .build/
+# version=development
 # docker buildx create --use --name multiarch-builder
 # docker buildx inspect --bootstrap
-# docker buildx build --no-cache --platform linux/amd64,linux/arm64 --tag jollyjinx/unifi2mqtt:latest --file unifi2mqtt.product.dockerfile --push .
-# docker buildx imagetools inspect jollyjinx/unifi2mqtt:latest
+# docker buildx build --no-cache --platform linux/amd64,linux/arm64 --tag "jollyjinx/unifi2mqtt:$version" --file unifi2mqtt.product.dockerfile --push .
+# docker buildx imagetools inspect "jollyjinx/unifi2mqtt:$version"
