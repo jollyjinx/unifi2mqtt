@@ -11,25 +11,48 @@ public extension IPv6.Address {
     /// - Parameter hostname: T-Online hostname in format pXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.dip0.t-ipconnect.de
     /// - Returns: An IPv6.Address if the hostname matches the expected pattern, nil otherwise
     static func fromTOnlineHostname(_ hostname: String) -> IPv6.Address? {
-        guard hostname.hasPrefix("p"), hostname.hasSuffix(".dip0.t-ipconnect.de") else { 
+        let prefix = "p"
+        let suffix = ".dip0.t-ipconnect.de"
+        
+        // Basic validation
+        guard hostname.hasPrefix(prefix), hostname.hasSuffix(suffix) else { 
             return nil 
         }
         
-        // match the ipv6 address from the name
-        let regex = /^p([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})\.dip0.t-ipconnect.de$/
-        do {
-            let match = try regex.wholeMatch(in: hostname)
-            if let match {
-                let ipv6Address = "\(String(match.1)):\(String(match.2)):\(String(match.3)):\(String(match.4)):\(String(match.5)):\(String(match.6)):\(String(match.7)):\(String(match.8))"
-                if let ipv6 = IPv6.Address(ipv6Address) {
-                    JLog.debug("Converted hostname \(hostname) to IPv6 address \(ipv6)")
-                    return ipv6
-                }
-            }
-        } catch {
-            JLog.error("Error matching T-Online hostname pattern: \(error)")
+        // Extract the hex part - in Swift, this is safer than using the prior approach
+        let startPos = hostname.index(hostname.startIndex, offsetBy: prefix.count)
+        let endPos = hostname.index(hostname.endIndex, offsetBy: -suffix.count)
+        
+        // Bounds check
+        guard startPos < endPos else { return nil }
+        
+        let hexString = String(hostname[startPos..<endPos])
+        
+        // Validate we have exactly 32 hex characters
+        guard hexString.count == 32, hexString.allSatisfy({ $0.isHexDigit }) else {
+            JLog.debug("Invalid T-Online hostname format: hexString=\(hexString), length=\(hexString.count)")
+            return nil
         }
         
-        return nil
+        // Format into IPv6 with colons
+        var ipv6String = ""
+        for i in stride(from: 0, to: hexString.count, by: 4) {
+            if i > 0 {
+                ipv6String.append(":")
+            }
+            let startIdx = hexString.index(hexString.startIndex, offsetBy: i)
+            let endIdx = hexString.index(startIdx, offsetBy: 4, limitedBy: hexString.endIndex) ?? hexString.endIndex
+            ipv6String.append(String(hexString[startIdx..<endIdx]))
+        }
+        
+        JLog.debug("Converted T-Online hostname \(hostname) to IPv6 string: \(ipv6String)")
+        
+        // Direct binary construction
+        let highBits: UInt64 = (UInt64(hexString.prefix(16), radix: 16) ?? 0)
+        let lowBits: UInt64 = (UInt64(hexString.suffix(16), radix: 16) ?? 0)
+        
+        JLog.debug("High bits: \(String(format:"0x%016llX", highBits)), Low bits: \(String(format:"0x%016llX", lowBits))")
+        
+        return IPv6.Address(highBits: highBits, lowBits: lowBits)
     }
 } 
