@@ -6,6 +6,7 @@ import Foundation
 import JLog
 import MQTTNIO
 import NIO
+import NIOPosix
 
 public actor MQTTPublisher
 {
@@ -27,7 +28,7 @@ public actor MQTTPublisher
         self.jsonOutput = jsonOutput
         self.baseTopic = baseTopic.hasSuffix("/") ? String(baseTopic.dropLast(1)) : baseTopic
 
-        mqttClient = MQTTClient(host: hostname, port: port, identifier: ProcessInfo.processInfo.processName, eventLoopGroupProvider: .createNew, configuration: .init(userName: username, password: ""))
+        mqttClient = MQTTClient(host: hostname, port: port, identifier: ProcessInfo.processInfo.processName, eventLoopGroupProvider: .shared(MultiThreadedEventLoopGroup.singleton), configuration: .init(userName: username, password: ""))
 
         mqttQueue.async { _ = self.mqttClient.connect() }
     }

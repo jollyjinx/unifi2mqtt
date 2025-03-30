@@ -18,7 +18,7 @@ public struct MACAddress: Hashable, Sendable
     {
         let regex = /^([:hexdigit:]{2}[:-]){5}([:hexdigit:]{2})$/
 
-        guard let match = try regex.firstMatch(in: address)
+        guard let _ = try regex.firstMatch(in: address)
         else
         {
             throw InvalidMACAddressError.invalidFormat
