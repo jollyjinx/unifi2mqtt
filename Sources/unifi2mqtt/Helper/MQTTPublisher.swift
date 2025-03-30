@@ -22,13 +22,13 @@ public actor MQTTPublisher
     let mqttQueue = DispatchQueue(label: "mqttQueue")
     var lasttimeused = [String: Date]()
 
-    public init(hostname: String, port: Int, username: String? = nil, password _: String? = nil, emitInterval: Double = 1.0, baseTopic: String = "", jsonOutput: Bool = false) async throws
+    public init(hostname: String, port: Int, username: String? = nil, password : String = "", emitInterval: Double = 1.0, baseTopic: String = "", jsonOutput: Bool = false) async throws
     {
         self.emitInterval = emitInterval
         self.jsonOutput = jsonOutput
         self.baseTopic = baseTopic.hasSuffix("/") ? String(baseTopic.dropLast(1)) : baseTopic
 
-        mqttClient = MQTTClient(host: hostname, port: port, identifier: ProcessInfo.processInfo.processName, eventLoopGroupProvider: .shared(MultiThreadedEventLoopGroup.singleton), configuration: .init(userName: username, password: ""))
+        mqttClient = MQTTClient(host: hostname, port: port, identifier: ProcessInfo.processInfo.processName, eventLoopGroupProvider: .shared(MultiThreadedEventLoopGroup.singleton), configuration: .init(userName: username, password: password))
 
         mqttQueue.async { _ = self.mqttClient.connect() }
     }
