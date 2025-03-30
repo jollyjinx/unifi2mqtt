@@ -1,5 +1,6 @@
 import XCTest
 @testable import UnifiLibrary
+import JLog
 
 final class IPv6AddressHelpersTests: XCTestCase {
     
@@ -13,7 +14,7 @@ final class IPv6AddressHelpersTests: XCTestCase {
             XCTAssertEqual(ipv6.lowBits, 0x5893916ab88c40e2, "Low bits should match expected value")
             
             // For debug purposes - this lets us see the actual format
-            JLog.debug("Converted T-Online hostname produced IPv6: \(ipv6.description)")
+            print("Converted T-Online hostname produced IPv6: \(ipv6.description)")
         } else {
             XCTFail("Should successfully extract IPv6 from valid T-Online hostname")
         }
