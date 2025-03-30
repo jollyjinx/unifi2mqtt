@@ -4,6 +4,7 @@
 
 import Foundation
 import JLog
+import RegexBuilder
 
 public struct UnifiClient: Sendable
 {
@@ -59,10 +60,30 @@ extension UnifiClient: Codable
             id = try container.decode(UUID.self, forKey: .id)
             name = try container.decode(String.self, forKey: .name)
             connectedAt = try container.decode(Date.self, forKey: .connectedAt)
-            ipAddress = try? container.decode(JNXIPAddress.self, forKey: .ipAddress)
+            var optionalIpAddress = try? container.decode(JNXIPAddress.self, forKey: .ipAddress)
             macAddress = try container.decode(MACAddress.self, forKey: .macAddress)
 
             lastSeen = (try? container.decode(Date.self, forKey: .lastSeen)) ?? Date()
+
+            // if no ipaddres but name in form : "p200300c587250f005893916ab88c40e2.dip0.t-ipconnect.de" get ip address from name
+            // converts to 2003:00c5:8725:0f00:5893:916a:b88c:40e2
+            if optionalIpAddress == nil && name.hasPrefix("p") && name.hasSuffix(".dip0.t-ipconnect.de")
+            {
+                // match the ipv6 address from the name
+                let regex = /^p([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})([\da-fA-F]{4})\.dip0.t-ipconnect.de$/
+                let match = try regex.wholeMatch(in: name)
+                if let match
+                {
+                    let ipv6Address = "\(String(match.1)):\(String(match.2)):\(String(match.3)):\(String(match.4)):\(String(match.5)):\(String(match.6)):\(String(match.7)):\(String(match.8))"
+                    if let ipv6 = IPv6.Address(ipv6Address)
+                    {
+                        let ip = JNXIPAddress.ipv6(ipv6)
+                        JLog.debug("Converted name \(name) to ipv6 address \(ip)")
+                        optionalIpAddress = ip
+                    }
+                }
+            }
+            ipAddress = optionalIpAddress
         }
         catch
         {
