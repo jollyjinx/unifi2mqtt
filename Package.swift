@@ -10,7 +10,7 @@ let package = Package(name: "unifi2mqtt",
                           .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
                           .package(url: "https://github.com/swift-server-community/mqtt-nio.git", from: "2.12.0"),
                           .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.25.2"),
-                          .package(url: "https://github.com/jollyjinx/JLog", .upToNextMajor(from: "0.0.6")),
+                          .package(url: "https://github.com/jollyjinx/JLog", .upToNextMajor(from: "0.0.7")),
                       ],
                       targets: [
                           .executableTarget(name: "unifi2mqtt",
