@@ -13,7 +13,7 @@ public struct ReportedNetwork: Sendable, Hashable, Equatable
 public extension ReportedNetwork
 {
     var gateway: IPv4.Address? { address?.gateway }
-    var network: IPv4.Network? { address?.network }
+    var network: IPv4.Address? { address?.network }
 }
 
 extension ReportedNetwork: Codable

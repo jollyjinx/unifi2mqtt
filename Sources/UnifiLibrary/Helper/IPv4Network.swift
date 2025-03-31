@@ -22,12 +22,11 @@ public enum IPv4
 
     public struct Network: Sendable, Hashable, CustomStringConvertible
     {
-        public let address: Address
+        public let gateway: Address
         public let netmask: Netmask
 
-        public var gateway: Address { address }
-        public var network: Network { Network(address: Address(bits: address.bits & netmask.bits), netmask: netmask) }
-        public var description: String { "\(address)/\(netmask)" }
+        public var network: Address { Address(bits: gateway.bits & netmask.bits) }
+        public var description: String { "\(network)/\(netmask)" }
     }
 }
 
@@ -71,17 +70,17 @@ public extension IPv4.Network
         let components = cidrString.split(separator: "/")
         guard components.count == 2 else { return nil }
 
-        guard let address = IPv4.Address(String(components[0])),
+        guard let gateway = IPv4.Address(String(components[0])),
               let netmask = IPv4.Netmask(String(components[1]))
         else { return nil }
 
-        self.address = address
+        self.gateway = gateway
         self.netmask = netmask
     }
 
     func contains(_ testAddress: IPv4.Address) -> Bool
     {
-        testAddress.bits & netmask.bits == address.bits & netmask.bits
+        testAddress.bits & netmask.bits == gateway.bits & netmask.bits
     }
 }
 
@@ -113,7 +112,7 @@ extension IPv4.Network: Codable
     {
         var container = encoder.singleValueContainer()
 
-        try container.encode("\(address)/\(netmask)")
+        try container.encode("\(gateway)/\(netmask)")
     }
 
     public init(from decoder: any Decoder) throws
