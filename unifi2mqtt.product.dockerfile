@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM swift:latest AS builder
+FROM swift:latest AS builder
 WORKDIR /swift
 COPY . .
 RUN swift build -c release
