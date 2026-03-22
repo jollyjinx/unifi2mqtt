@@ -1,0 +1,125 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Run test suite
+        run: swift test
+
+  build:
+    name: Build (${{ matrix.arch }})
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64
+          - arm64
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build static Linux release archive
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+
+          scratchdir="/tmp/unifi2mqtt-build-${ARCH}"
+          packagedir="unifi2mqtt.${ARCH}"
+          archive="unifi2mqtt.${ARCH}.tar.gz"
+
+          rm -rf "$packagedir" "$archive"
+
+          docker run --rm \
+            --platform "linux/${ARCH}" \
+            --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            swift:6.2.1-jammy \
+            bash -lc "rm -rf '$scratchdir' && \
+                      swift build -c release --static-swift-stdlib --jobs 1 --scratch-path '$scratchdir' && \
+                      mkdir -p '$packagedir' && \
+                      strip '$scratchdir/release/unifi2mqtt' && \
+                      strip '$scratchdir/release/unifimqtt2dns' && \
+                      cp '$scratchdir/release/unifi2mqtt' '$packagedir/' && \
+                      cp '$scratchdir/release/unifimqtt2dns' '$packagedir/' && \
+                      tar -czf '$archive' '$packagedir' && \
+                      rm -rf '$scratchdir' '$packagedir'"
+
+      - name: Verify release archive
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+
+          archive="unifi2mqtt.${ARCH}.tar.gz"
+
+          test -f "$archive"
+          tar -tzf "$archive"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unifi2mqtt-${{ matrix.arch }}
+          path: unifi2mqtt.${{ matrix.arch }}.tar.gz
+          if-no-files-found: error
+
+  release:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: unifi2mqtt-*
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
+          sha256sum unifi2mqtt.amd64.tar.gz unifi2mqtt.arm64.tar.gz > SHA256SUMS
+
+      - name: Create or update GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'gamma') }}
+          generate_release_notes: true
+          overwrite_files: true
+          files: |
+            unifi2mqtt.amd64.tar.gz
+            unifi2mqtt.arm64.tar.gz
+            SHA256SUMS

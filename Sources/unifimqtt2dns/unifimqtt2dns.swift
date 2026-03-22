@@ -390,7 +390,7 @@ private actor DNSUpdaterService
         request.httpMethod = "GET"
         request.setValue("Bearer \(apiToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("unifimqtt2dnsr/1.0", forHTTPHeaderField: "User-Agent")
+        request.setValue("unifimqtt2dns/1.0", forHTTPHeaderField: "User-Agent")
         request.timeoutInterval = 30
 
         let responseData: Data

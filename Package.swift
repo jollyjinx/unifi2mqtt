@@ -11,7 +11,7 @@ let package = Package(name: "unifi2mqtt",
                           .package(url: "https://github.com/swift-server-community/mqtt-nio.git", from: "2.12.0"),
                           .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.25.2"),
                           .package(url: "https://github.com/jollyjinx/JLog", .upToNextMajor(from: "0.0.7")),
-                          .package(url: "https://github.com/jollyjinx/hetzner-dyndns-cgi", .upToNextMajor(from: "2.0.0")),
+                          .package(url: "https://github.com/jollyjinx/hetzner-dyndns-cgi", revision: "8d3d0bfae9b49d60f856b449ae73dec86fc926c9"),
                       ],
                       targets: [
                           .executableTarget(name: "unifi2mqtt",

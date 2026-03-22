@@ -2,7 +2,7 @@
 
 `unifi2mqtt` is a Swift-based command-line tool that bridges Ubiquiti's UniFi network management system with an MQTT broker. It periodically retrieves client data from a UniFi controller and publishes this information to specified MQTT topics, facilitating seamless integration between UniFi networks and MQTT-enabled applications.
 
-The package also contains `unifimqtt2dnsr`, which subscribes to `unifi2mqtt` client updates on MQTT and updates matching Hetzner DNS records through the local `HetznerDynDNS` Swift package.
+The package also contains `unifimqtt2dns`, which subscribes to `unifi2mqtt` client updates on MQTT and updates matching Hetzner DNS records through the Hetzner Console DNS API.
 
 ## Features
 
@@ -102,12 +102,12 @@ The package also contains `unifimqtt2dnsr`, which subscribes to `unifi2mqtt` cli
 
 1. **Run the Hetzner DNS updater:**
 
-    `unifimqtt2dnsr` subscribes to `unifi/hostsbynetwork/+/+` by default, filters the same IPv4 ranges as the old Perl script, checks that the target Hetzner `A` record currently has `ttl = 60`, and only then performs the DynDNS-style update.
+    `unifimqtt2dns` subscribes to `unifi/hostsbynetwork/+/+` by default, filters the same IPv4 ranges as the old Perl script, checks that the target Hetzner `A` record currently has `ttl = 60`, and only then updates the Hetzner `A` rrset.
 
     ```bash
     HETZNER_ZONE_IDENTIFIER=example.com \
     HETZNER_API_TOKEN=... \
-    .build/release/unifimqtt2dnsr \
+    .build/release/unifimqtt2dns \
       --mqtt-hostname mqtt \
       --mqtt-username mqtt \
       --mqtt-password secret
