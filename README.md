@@ -2,6 +2,8 @@
 
 `unifi2mqtt` is a Swift-based command-line tool that bridges Ubiquiti's UniFi network management system with an MQTT broker. It periodically retrieves client data from a UniFi controller and publishes this information to specified MQTT topics, facilitating seamless integration between UniFi networks and MQTT-enabled applications.
 
+The package also contains `unifimqtt2dnsr`, which subscribes to `unifi2mqtt` client updates on MQTT and updates matching Hetzner DNS records through the local `HetznerDynDNS` Swift package.
+
 ## Features
 
 - **Periodic Data Retrieval:** Fetches client data from the UniFi controller at user-defined intervals.
@@ -98,6 +100,25 @@
     -h, --help              Show help information.
     ```
 
+1. **Run the Hetzner DNS updater:**
+
+    `unifimqtt2dnsr` subscribes to `unifi/hostsbynetwork/+/+` by default, filters the same IPv4 ranges as the old Perl script, checks that the target Hetzner `A` record currently has `ttl = 60`, and only then performs the DynDNS-style update.
+
+    ```bash
+    HETZNER_ZONE_IDENTIFIER=example.com \
+    HETZNER_API_TOKEN=... \
+    .build/release/unifimqtt2dnsr \
+      --mqtt-hostname mqtt \
+      --mqtt-username mqtt \
+      --mqtt-password secret
+    ```
+
+    If your MQTT client names are FQDNs instead of relative hostnames, also pass:
+
+    ```bash
+    --hetzner-zone-name example.com
+    ```
+
 
 
 ## Further reading
@@ -108,4 +129,3 @@ Some documentation and resources that might be helpful:
 - https://ubntwiki.com/products/software/unifi-controller/api
 - https://developer.ui.com/site-manager-api/
 - https://github.com/Art-of-WiFi/UniFi-API-client
-
