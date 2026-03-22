@@ -1,6 +1,10 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.2
 
 import PackageDescription
+
+let strictConcurrencySettings: [SwiftSetting] = [
+    .enableExperimentalFeature("StrictConcurrency=complete"),
+]
 
 let package = Package(name: "unifi2mqtt",
                       platforms: [
@@ -20,19 +24,22 @@ let package = Package(name: "unifi2mqtt",
                                                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                                                 .product(name: "MQTTNIO", package: "mqtt-nio"),
                                                 .product(name: "JLog", package: "JLog"),
-                                            ]),
+                                            ],
+                                            swiftSettings: strictConcurrencySettings),
                           .executableTarget(name: "unifimqtt2dns",
                                             dependencies: [
                                                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                                                 .product(name: "HetznerDynDNS", package: "hetzner-dyndns-cgi"),
                                                 .product(name: "MQTTNIO", package: "mqtt-nio"),
                                                 .product(name: "JLog", package: "JLog"),
-                                            ]),
+                                            ],
+                                            swiftSettings: strictConcurrencySettings),
                           .target(name: "UnifiLibrary",
                                   dependencies: [
                                       .product(name: "JLog", package: "JLog"),
                                       .product(name: "AsyncHTTPClient", package: "async-http-client"),
-                                  ]),
+                                  ],
+                                  swiftSettings: strictConcurrencySettings),
                           .testTarget(name: "UnifiLibraryTests",
                                       dependencies: [
                                           "UnifiLibrary",
@@ -40,5 +47,6 @@ let package = Package(name: "unifi2mqtt",
                                       ],
                                       resources: [
                                           .copy("Resources"),
-                                      ]),
+                                      ],
+                                      swiftSettings: strictConcurrencySettings),
                       ])

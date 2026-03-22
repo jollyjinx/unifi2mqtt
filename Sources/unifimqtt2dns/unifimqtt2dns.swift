@@ -16,7 +16,6 @@ extension JLog.Level: @retroactive ExpressibleByArgument {}
 #endif
 
 @main
-@MainActor
 struct unifimqtt2dns: AsyncParsableCommand
 {
     @Option(help: "Set the log level.") var logLevel: JLog.Level = defaultLoglevel
