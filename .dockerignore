@@ -1,6 +1,10 @@
 .build
 .git
 .github
+.swiftpm
 .DS_Store
+README.md
+LICENSE
+build-linux-static.sh
 unifi2mqtt.amd64
 *.tar.gz

@@ -1,11 +1,22 @@
+# syntax=docker/dockerfile:1.7
 FROM swift:6.2.1-jammy AS builder
 
 ARG PRODUCT=unifi2mqtt
 
 WORKDIR /workspace
-COPY . .
+ENV SWIFTPM_BUILD_TESTS=false
 
-RUN swift build -c release --product "${PRODUCT}" --static-swift-stdlib \
+COPY Package.swift ./
+RUN --mount=type=cache,target=/root/.cache \
+    --mount=type=cache,target=/root/.swiftpm \
+    swift package resolve
+COPY Sources ./Sources
+COPY Tests ./Tests
+
+RUN --mount=type=cache,target=/root/.cache \
+    --mount=type=cache,target=/root/.swiftpm \
+    --mount=type=cache,target=/workspace/.build \
+    swift build -c release --product "${PRODUCT}" --static-swift-stdlib \
     && install -Dm755 ".build/release/${PRODUCT}" "/out/${PRODUCT}"
 
 FROM ubuntu:22.04
