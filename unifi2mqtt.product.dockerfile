@@ -1,32 +1,30 @@
-FROM swift:latest AS builder
-WORKDIR /swift
+FROM swift:6.2.1-jammy AS builder
+
+ARG PRODUCT=unifi2mqtt
+
+WORKDIR /workspace
 COPY . .
-RUN swift build -c release
-RUN chmod -R u+rwX,go+rX-w /swift/.build/release/
 
-FROM swift:slim
-WORKDIR /unifi2mqtt
-ENV PATH="$PATH:/unifi2mqtt"
-COPY --from=builder /swift/.build/release/unifi2mqtt .
-CMD ["unifi2mqtt"]
+RUN swift build -c release --product "${PRODUCT}" --static-swift-stdlib \
+    && install -Dm755 ".build/release/${PRODUCT}" "/out/${PRODUCT}"
 
-# create your own docker image:
-#
-# docker build . --file unifi2mqtt.product.dockerfile --tag unifi2mqtt
-# docker run --name unifi2mqtt unifi2mqtt
+FROM ubuntu:22.04
 
+ARG PRODUCT=unifi2mqtt
 
-# following lines are for publishing on docker hub
-#
-# docker build . --file unifi2mqtt.product.dockerfile --tag jollyjinx/unifi2mqtt:latest && docker push jollyjinx/unifi2mqtt:latest
-# docker tag jollyjinx/unifi2mqtt:development jollyjinx/unifi2mqtt:latest  && docker push jollyjinx/unifi2mqtt:latest
-# docker tag jollyjinx/unifi2mqtt:development jollyjinx/unifi2mqtt:3.1.1  && docker push jollyjinx/unifi2mqtt:3.1.1
+WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates libcurl4 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --create-home --home-dir /app appuser
 
-# multiarch build:
-# rm -rf .build/
-# version=development
-# docker buildx create --use --name multiarch-builder
-# docker buildx inspect --bootstrap
-# docker buildx build --no-cache --platform linux/amd64,linux/arm64 --tag "jollyjinx/unifi2mqtt:$version" --file unifi2mqtt.product.dockerfile --push .
-# docker buildx imagetools inspect "jollyjinx/unifi2mqtt:$version"
+COPY --from=builder "/out/${PRODUCT}" "/usr/local/bin/${PRODUCT}"
+
+RUN printf '#!/bin/sh\nexec /usr/local/bin/%s "$@"\n' "${PRODUCT}" > /usr/local/bin/entrypoint \
+    && chmod 755 /usr/local/bin/entrypoint "/usr/local/bin/${PRODUCT}" \
+    && chown -R appuser:appuser /app
+
+USER appuser
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]

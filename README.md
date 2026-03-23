@@ -35,14 +35,22 @@ The package also contains `unifimqtt2dns`, which subscribes to `unifi2mqtt` clie
 1. **Build the Project via docker:**
 
     ```bash
-    docker build . --file unifi2mqtt.product.dockerfile --tag unifi2mqtt
+    docker build . --file unifi2mqtt.product.dockerfile --build-arg PRODUCT=unifi2mqtt --tag unifi2mqtt
     docker run --name unifi2mqtt unifi2mqtt --unifi-api-key <unifi-api-key> .....
     ```
 
-1. **Run the Project with docker:**
+1. **Build the Hetzner updater image via docker:**
 
     ```bash
-    docker run --name unifi2mqtt jollyjinx/unifi2mqtt:latest unifi2mqtt --unifi-api-key <unifi-api-key> .....
+    docker build . --file unifi2mqtt.product.dockerfile --build-arg PRODUCT=unifimqtt2dns --tag unifimqtt2dns
+    docker run --name unifimqtt2dns unifimqtt2dns --mqtt-hostname mqtt --mqtt-password secret
+    ```
+
+1. **Run the published images from GitHub Container Registry:**
+
+    ```bash
+    docker run --name unifi2mqtt ghcr.io/jollyjinx/unifi2mqtt:latest --unifi-api-key <unifi-api-key> .....
+    docker run --name unifimqtt2dns ghcr.io/jollyjinx/unifimqtt2dns:latest --mqtt-hostname mqtt --mqtt-password secret
     ```
 
     

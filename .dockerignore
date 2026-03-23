@@ -1,0 +1,6 @@
+.build
+.git
+.github
+.DS_Store
+unifi2mqtt.amd64
+*.tar.gz
