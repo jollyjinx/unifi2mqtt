@@ -5,6 +5,7 @@
 //  Created by Patrick Stein on 30.03.25.
 //
 
+import Foundation
 import Testing
 @testable import UnifiLibrary
 
