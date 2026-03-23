@@ -15,7 +15,7 @@ ARG PRODUCT=unifi2mqtt
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates libcurl4 \
+    && apt-get install -y --no-install-recommends ca-certificates libcurl4 tzdata \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --create-home --home-dir /app appuser
 
