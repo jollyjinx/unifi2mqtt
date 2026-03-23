@@ -3,10 +3,18 @@ name: Release
 on:
   push:
     branches:
+      - main
       - development
     tags:
-      - '*.*.*'
-      - '*.*.*-*'
+      - "*.*.*"
+      - "*.*.*-*"
+      - "v*.*.*"
+      - "v*.*.*-*"
+      - "beta"
+      - "development"
+
+env:
+  REGISTRY: ghcr.io
 
 permissions:
   contents: write
@@ -19,7 +27,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Swift
         uses: swift-actions/setup-swift@v2
@@ -45,18 +53,18 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -66,27 +74,30 @@ jobs:
           set -euo pipefail
 
           owner="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
-          image="ghcr.io/${owner}/${{ matrix.product }}"
-          is_prerelease=false
+          image="${{ env.REGISTRY }}/${owner}/${{ matrix.product }}"
+          prerelease=false
           case "${GITHUB_REF_NAME}" in
-            *alpha*|*beta*|*gamma*) is_prerelease=true ;;
+            development|*alpha*|*beta*|*gamma*) prerelease=true ;;
           esac
 
           echo "name=${image}" >> "$GITHUB_OUTPUT"
-          echo "is_prerelease=${is_prerelease}" >> "$GITHUB_OUTPUT"
+          echo "prerelease=${prerelease}" >> "$GITHUB_OUTPUT"
 
       - name: Generate Docker metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ steps.image.outputs.name }}
           tags: |
-            type=raw,value=${{ github.ref_name }}
-            type=raw,value=latest,enable=${{ steps.image.outputs.is_prerelease != 'true' }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=development,enable=${{ github.ref == 'refs/heads/development' || github.ref == 'refs/tags/development' || contains(github.ref_name, '-development') }}
+            type=raw,value=beta,enable=${{ github.ref == 'refs/tags/beta' || contains(github.ref_name, '-beta') }}
+            type=semver,pattern={{version}},value=${{ github.ref_name }},enable=${{ startsWith(github.ref, 'refs/tags/') && github.ref_name != 'beta' && github.ref_name != 'development' }}
 
       - name: Build and publish multi-arch image
         id: build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./unifi2mqtt.product.dockerfile
@@ -100,6 +111,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.product }}
 
       - name: Write release asset metadata
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           set -euo pipefail
 
@@ -110,16 +122,11 @@ jobs:
             echo "Digest: ${{ steps.build.outputs.digest }}"
             echo
             echo "Published tags:"
-            echo "  ${{ steps.image.outputs.name }}:${{ github.ref_name }}"
-            if [ "${{ steps.image.outputs.is_prerelease }}" != "true" ]; then
-              echo "  ${{ steps.image.outputs.name }}:latest"
-            fi
-            echo
-            echo "Pull:"
-            echo "  docker pull ${{ steps.image.outputs.name }}:${{ github.ref_name }}"
+            printf '%s\n' '${{ steps.meta.outputs.tags }}' | sed 's/^/  /'
           } > "${asset}"
 
       - name: Upload image metadata
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4
         with:
           name: image-metadata-${{ matrix.product }}
@@ -128,6 +135,7 @@ jobs:
 
   release:
     name: Publish Release
+    if: startsWith(github.ref, 'refs/tags/')
     needs: publish-images
     runs-on: ubuntu-latest
 
@@ -143,14 +151,26 @@ jobs:
           set -euo pipefail
           cat unifi2mqtt-image.txt unifimqtt2dns-image.txt > DOCKER-IMAGES.txt
 
+      - name: Determine prerelease status
+        id: release
+        run: |
+          set -euo pipefail
+
+          prerelease=false
+          case "${GITHUB_REF_NAME}" in
+            development|*alpha*|*beta*|*gamma*) prerelease=true ;;
+          esac
+
+          echo "prerelease=${prerelease}" >> "$GITHUB_OUTPUT"
+
       - name: Create or update GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           draft: false
-          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'gamma') }}
-          generate_release_notes: true
+          prerelease: ${{ steps.release.outputs.prerelease == 'true' }}
+          body_path: DOCKER-IMAGES.txt
           overwrite_files: true
           files: |
             DOCKER-IMAGES.txt
