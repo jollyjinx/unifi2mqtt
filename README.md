@@ -11,6 +11,15 @@ The package also contains `unifimqtt2dns`, which subscribes to `unifi2mqtt` clie
 - **Configurable Logging:** Adjustable log levels to control the verbosity of the application's output.
 - **Signal Handling:** Supports runtime log level adjustments via `SIGUSR1` signals.
 
+## Documentation
+
+The README is intentionally plain Markdown for GitHub readers. Agent-oriented project documentation lives in front matter Markdown files under [`docs/`](docs/):
+
+- [`docs/INDEX.md`](docs/INDEX.md) - documentation map and front matter conventions
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - package layout, runtime flow, and source landmarks
+- [`docs/OPERATIONS.md`](docs/OPERATIONS.md) - build, run, container, and configuration notes
+- [`docs/AGENT_GUIDE.md`](docs/AGENT_GUIDE.md) - navigation guide for coding agents
+
 ## Prerequisites
 
 - Swift 6 or later, macOS, linux
@@ -32,25 +41,25 @@ The package also contains `unifimqtt2dns`, which subscribes to `unifi2mqtt` clie
     cd unifi2mqtt
     swift build -c release
     ```
-1. **Build the Project via docker:**
+1. **Build the Project via container:**
 
     ```bash
-    docker build . --file unifi2mqtt.product.dockerfile --build-arg PRODUCT=unifi2mqtt --tag unifi2mqtt
-    docker run --name unifi2mqtt unifi2mqtt --unifi-api-key <unifi-api-key> .....
+    container build . --file unifi2mqtt.product.dockerfile --build-arg PRODUCT=unifi2mqtt --tag unifi2mqtt
+    container run --name unifi2mqtt unifi2mqtt --unifi-api-key <unifi-api-key> .....
     ```
 
-1. **Build the Hetzner updater image via docker:**
+1. **Build the Hetzner updater image via container:**
 
     ```bash
-    docker build . --file unifi2mqtt.product.dockerfile --build-arg PRODUCT=unifimqtt2dns --tag unifimqtt2dns
-    docker run --name unifimqtt2dns unifimqtt2dns --mqtt-hostname mqtt --mqtt-password secret
+    container build . --file unifi2mqtt.product.dockerfile --build-arg PRODUCT=unifimqtt2dns --tag unifimqtt2dns
+    container run --name unifimqtt2dns unifimqtt2dns --mqtt-hostname mqtt --mqtt-password secret
     ```
 
 1. **Run the published images from GitHub Container Registry:**
 
     ```bash
-    docker run --name unifi2mqtt ghcr.io/jollyjinx/unifi2mqtt:latest --unifi-api-key <unifi-api-key> .....
-    docker run --name unifimqtt2dns ghcr.io/jollyjinx/unifimqtt2dns:latest --mqtt-hostname mqtt --mqtt-password secret
+    container run --name unifi2mqtt ghcr.io/jollyjinx/unifi2mqtt:latest --unifi-api-key <unifi-api-key> .....
+    container run --name unifimqtt2dns ghcr.io/jollyjinx/unifimqtt2dns:latest --mqtt-hostname mqtt --mqtt-password secret
     ```
 
     
