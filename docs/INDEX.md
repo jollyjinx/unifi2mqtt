@@ -17,6 +17,7 @@ front_matter_schema:
     - commands
 related:
   - ../README.md
+  - ../AI/README.md
   - ARCHITECTURE.md
   - OPERATIONS.md
   - AGENT_GUIDE.md
@@ -24,7 +25,7 @@ related:
 
 # Documentation Index
 
-This project keeps GitHub-facing overview material in `README.md` as plain Markdown. Files under `docs/` are front matter Markdown files so agents can discover purpose, scope, and related source files before loading full document bodies.
+This project keeps GitHub-facing overview material in `README.md` as plain Markdown. Files under `docs/` are front matter Markdown files so agents can discover purpose, scope, and related source files before loading full document bodies. `AI/README.md` is the repository-wide discovery entry point and routes back to this index.
 
 ## Front Matter Convention
 
@@ -52,6 +53,7 @@ Use `related` for nearby documentation or important source files. Use `source_la
 - `ARCHITECTURE.md`: package structure, executable responsibilities, and runtime data flow.
 - `OPERATIONS.md`: build, run, configuration, container, and verification commands.
 - `AGENT_GUIDE.md`: repo navigation and change guidelines for coding agents.
+- `../AI/README.md`: agent discovery entry point, compatibility boundaries, and nested dependency rules.
 
 ## Maintenance Rules
 

@@ -66,15 +66,15 @@ If MQTT client names are fully qualified, pass `--hetzner-zone-name example.com`
 
 ## Container Builds
 
-This repository's local workflow uses the `container` command for container operations.
+This repository uses Docker for local container operations.
 
 ```bash
-container build . \
+docker build . \
   --file unifi2mqtt.product.dockerfile \
   --build-arg PRODUCT=unifi2mqtt \
   --tag unifi2mqtt
 
-container build . \
+docker build . \
   --file unifi2mqtt.product.dockerfile \
   --build-arg PRODUCT=unifimqtt2dns \
   --tag unifimqtt2dns
@@ -83,12 +83,12 @@ container build . \
 Run published images:
 
 ```bash
-container run --name unifi2mqtt \
+docker run --rm --name unifi2mqtt \
   ghcr.io/jollyjinx/unifi2mqtt:latest \
   --unifi-api-key ... \
   --mqtt-hostname mqtt
 
-container run --name unifimqtt2dns \
+docker run --rm --name unifimqtt2dns \
   ghcr.io/jollyjinx/unifimqtt2dns:latest \
   --mqtt-hostname mqtt \
   --mqtt-password secret
@@ -109,4 +109,4 @@ swift build
 swift test
 ```
 
-For container or release changes, also run the relevant `container build` command for each affected product.
+For container or release changes, also run the relevant `docker build` command for each affected product.

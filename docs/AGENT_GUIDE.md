@@ -8,6 +8,7 @@ related:
   - INDEX.md
   - ARCHITECTURE.md
   - OPERATIONS.md
+  - ../AI/README.md
   - ../README.md
   - ../Package.swift
 source_landmarks:
@@ -26,7 +27,7 @@ Start with `docs/INDEX.md` for documentation scope, then use `docs/ARCHITECTURE.
 ## Documentation Rules
 
 - Keep `README.md` as plain Markdown without front matter.
-- Put agent-oriented documentation in `docs/`.
+- Put detailed agent-oriented documentation in `docs/`; keep `AI/README.md` as a concise routing entry point.
 - Start every `docs/*.md` file with YAML front matter.
 - Include `related` or `source_landmarks` whenever a document describes specific code paths.
 - Prefer linking to existing docs instead of duplicating operational instructions.
