@@ -6,7 +6,6 @@ import FoundationNetworking
 import HetznerDynDNS
 import JLog
 import MQTTNIO
-import NIOPosix
 
 extension JLog.Level: @retroactive ExpressibleByArgument {}
 #if DEBUG
@@ -62,63 +61,39 @@ struct unifimqtt2dns: AsyncParsableCommand
 
         while !Task.isCancelled
         {
-            let client = MQTTClient(host: mqttHostname,
-                                    port: Int(mqttPort),
-                                    identifier: ProcessInfo.processInfo.processName,
-                                    eventLoopGroupProvider: .shared(MultiThreadedEventLoopGroup.singleton),
-                                    configuration: .init(userName: mqttUsername, password: mqttPassword))
-
             do
             {
-                try await runClient(client, service: service)
+                try await MQTTConnection.withConnection(address: .hostname(mqttHostname, port: Int(mqttPort)),
+                                                        configuration: .init(userName: mqttUsername, password: mqttPassword),
+                                                        identifier: ProcessInfo.processInfo.processName)
+                {
+                    connection in
+                    try await runClient(connection, service: service)
+                }
             }
             catch
             {
                 JLog.error("MQTT loop failed: \(error)")
             }
 
-            try? await client.shutdown()
             try? await Task.sleep(for: .seconds(5))
         }
     }
 
-    private func runClient(_ client: MQTTClient, service: DNSUpdaterService) async throws
+    private func runClient(_ connection: MQTTConnection, service: DNSUpdaterService) async throws
     {
-        let listenerName = "\(ProcessInfo.processInfo.processName)-\(UUID().uuidString)"
-
-        client.addPublishListener(named: listenerName)
-        { result in
-            Task
-            {
-                await service.handlePublish(result)
-            }
-        }
-
-        defer
-        {
-            client.removePublishListener(named: listenerName)
-            client.removeCloseListener(named: listenerName)
-        }
-
-        _ = try await client.connect()
         JLog.notice("Connected to mqtt://\(mqttHostname):\(mqttPort)")
 
         let subscriptions = [MQTTSubscribeInfo(topicFilter: mqttTopicFilter, qos: .atMostOnce)]
-        _ = try await client.subscribe(to: subscriptions)
-        JLog.notice("Subscribed to \(mqttTopicFilter)")
-
-        try await withCheckedThrowingContinuation
+        try await connection.subscribe(to: subscriptions)
         {
-            (continuation: CheckedContinuation<Void, Error>) in
-            client.addCloseListener(named: listenerName)
-            { result in
-                switch result
-                {
-                    case .success:
-                        continuation.resume()
-                    case let .failure(error):
-                        continuation.resume(throwing: error)
-                }
+            subscription in
+
+            JLog.notice("Subscribed to \(mqttTopicFilter)")
+
+            for try await message in subscription
+            {
+                await service.handlePublish(message)
             }
         }
     }
@@ -187,23 +162,16 @@ private actor DNSUpdaterService
         self.apiBaseURL = ProcessInfo.processInfo.environment["HETZNER_API_BASE_URL"] ?? "https://api.hetzner.cloud/v1"
     }
 
-    func handlePublish(_ result: Result<MQTTPublishInfo, Error>) async
+    func handlePublish(_ message: MQTTPublishInfo) async
     {
-        switch result
+        guard let payload = message.payload.getString(at: message.payload.readerIndex, length: message.payload.readableBytes)
+        else
         {
-            case let .failure(error):
-                JLog.error("MQTT publish listener failed: \(error)")
-
-            case let .success(message):
-                guard let payload = message.payload.getString(at: message.payload.readerIndex, length: message.payload.readableBytes)
-                else
-                {
-                    JLog.error("Could not read mqtt payload from topic \(message.topicName)")
-                    return
-                }
-
-                await handlePayload(payload, topicName: message.topicName)
+            JLog.error("Could not read mqtt payload from topic \(message.topicName)")
+            return
         }
+
+        await handlePayload(payload, topicName: message.topicName)
     }
 
     private func handlePayload(_ payload: String, topicName: String) async

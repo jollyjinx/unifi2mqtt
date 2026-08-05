@@ -36,7 +36,7 @@ source_landmarks:
 
 1. Parses CLI arguments with `swift-argument-parser`.
 2. Reads `UNIFI_API_KEY` when `--unifi-api-key` is omitted.
-3. Creates `MQTTPublisher`.
+3. Opens a scoped async `MQTTConnection` and creates `MQTTPublisher` around it.
 4. Creates `UnifiHost`, which retrieves UniFi data on an interval.
 5. Starts the UniFi polling task.
 6. Observes old devices, clients, devices, and device details concurrently.
@@ -46,7 +46,7 @@ source_landmarks:
 
 1. Parses MQTT and Hetzner options.
 2. Reads `HETZNER_ZONE_IDENTIFIER` and `HETZNER_API_TOKEN` when matching CLI options are omitted.
-3. Connects to MQTT and subscribes to `unifi/hostsbynetwork/+/+` in release builds.
+3. Opens a scoped async MQTT connection and consumes `unifi/hostsbynetwork/+/+` as an `AsyncSequence` in release builds.
 4. Decodes client update payloads.
 5. Filters updates by IPv4 regex and hostname normalization.
 6. Checks Hetzner record eligibility by requiring a TTL 60 `A` record.
@@ -57,7 +57,7 @@ source_landmarks:
 The package uses:
 
 - `swift-argument-parser` for command-line parsing.
-- `mqtt-nio` for MQTT clients.
+- The `jollyjinx/mqtt-nio` fork at revision `e670a69ee3122bd11ef04f668757ffc01c263468` for scoped async MQTT connections, publishing, and subscriptions. The manifest pins the tested revision because the fork does not yet publish release tags.
 - `async-http-client` and `swift-nio` in `UnifiLibrary`.
 - `JLog` for logging.
 - `hetzner-dyndns-cgi` for DNS updates.

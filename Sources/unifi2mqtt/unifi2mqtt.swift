@@ -74,21 +74,54 @@ struct unifi2mqtt: AsyncParsableCommand
         }
         guard !unifiAPIKey.isEmpty else { throw ValidationError("UniFi API Key not set.\n\n\(unifi2mqtt.helpMessage())") }
 
-        let mqttPublisher = try await MQTTPublisher(hostname: mqttHostname, port: Int(mqttPort), username: mqttUsername, password: mqttPassword, emitInterval: minimumEmitInterval, baseTopic: basetopic, jsonOutput: jsonOutput)
+        let mqttConfiguration = MQTTConnectionConfiguration(userName: mqttUsername, password: mqttPassword)
 
-        let unifiHost = try await UnifiHost(host: unifiHostname, apiKey: unifiAPIKey, siteId: unifiSiteId, requestInterval: requestInterval, refreshInterval: maximumEmitInterval)
+        while !Task.isCancelled
+        {
+            do
+            {
+                try await MQTTConnection.withConnection(address: .hostname(mqttHostname, port: Int(mqttPort)),
+                                                        configuration: mqttConfiguration,
+                                                        identifier: ProcessInfo.processInfo.processName)
+                {
+                    connection in
 
-        Task { await unifiHost.run() }
+                    JLog.notice("Connected to mqtt://\(mqttHostname):\(mqttPort)")
 
-        await withTaskGroup(of: Void.self)
+                    let mqttPublisher = MQTTPublisher(connection: connection,
+                                                      emitInterval: minimumEmitInterval,
+                                                      baseTopic: basetopic,
+                                                      jsonOutput: jsonOutput)
+                    let unifiHost = try await UnifiHost(host: unifiHostname,
+                                                        apiKey: unifiAPIKey,
+                                                        siteId: unifiSiteId,
+                                                        requestInterval: requestInterval,
+                                                        refreshInterval: maximumEmitInterval)
+
+                    try await runBridge(unifiHost: unifiHost, mqttPublisher: mqttPublisher)
+                }
+            }
+            catch
+            {
+                JLog.error("MQTT loop failed: \(error)")
+            }
+
+            try? await Task.sleep(for: .seconds(5))
+        }
+    }
+
+    func runBridge(unifiHost: UnifiHost, mqttPublisher: MQTTPublisher) async throws
+    {
+        try await withThrowingTaskGroup(of: Void.self)
         {
             group in
 
+            group.addTask { await unifiHost.run() }
             group.addTask
             {
                 for await oldDevices in await unifiHost.observeOldDevices()
                 {
-                    try? await mqttUpdateOldDevices(oldDevices, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
+                    try await mqttUpdateOldDevices(oldDevices, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
                 }
             }
             group.addTask
@@ -96,25 +129,26 @@ struct unifi2mqtt: AsyncParsableCommand
                 for await clients in await unifiHost.observeClients()
                 {
                     JLog.debug("Clients updated:\(clients.count)")
-                    try? await mqttUpdateClient(clients, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
+                    try await mqttUpdateClient(clients, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
                 }
             }
             group.addTask
             {
                 for await devices in await unifiHost.observeDevices()
                 {
-                    try? await mqttUpdateDevice(devices, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
+                    try await mqttUpdateDevice(devices, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
                 }
             }
             group.addTask
             {
-                for await devicedetails in await unifiHost.observeDeviceDetails()
+                for await deviceDetails in await unifiHost.observeDeviceDetails()
                 {
-                    try? await mqttUpdateDeviceDetail(devicedetails, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
+                    try await mqttUpdateDeviceDetail(deviceDetails, mqttPublisher: mqttPublisher, unifiHost: unifiHost)
                 }
             }
+
+            try await group.waitForAll()
         }
-        fatalError("Exited TaskGroup - this should not happen")
     }
 
     func mqttUpdateClient(_ clients: Set<UnifiClient>, mqttPublisher: MQTTPublisher, unifiHost: UnifiHost) async throws
