@@ -1,131 +1,146 @@
 # unifi2mqtt
 
-`unifi2mqtt` is a Swift-based command-line tool that bridges Ubiquiti's UniFi network management system with an MQTT broker. It periodically retrieves client data from a UniFi controller and publishes this information to specified MQTT topics, facilitating seamless integration between UniFi networks and MQTT-enabled applications.
-
-The package also contains `unifimqtt2dns`, which subscribes to `unifi2mqtt` client updates on MQTT and updates matching Hetzner DNS records through the Hetzner Console DNS API.
+`unifi2mqtt` is a Swift service that polls a UniFi controller and publishes selected client, network, device, and device-detail data to MQTT. The same Swift package also provides `unifimqtt2dns`, an MQTT consumer that updates eligible Hetzner DNS `A` records from UniFi client events.
 
 ## Features
 
-- **Periodic Data Retrieval:** Fetches client data from the UniFi controller at user-defined intervals.
-- **MQTT Publishing:** Publishes the retrieved data to an MQTT broker, enabling real-time monitoring and integration.
-- **Configurable Logging:** Adjustable log levels to control the verbosity of the application's output.
-- **Signal Handling:** Supports runtime log level adjustments via `SIGUSR1` signals.
+- UniFi client and device retrieval through API-key authentication
+- Configurable MQTT topic families, base topic, retain behavior, and emit intervals
+- JSON output mode for inspection and pipelines
+- Hetzner DNS updates with IPv4 filtering, TTL eligibility checks, caching, and per-host cooldown
+- Runtime log-level cycling with `SIGUSR1`
+- Swift 6.2 strict-concurrency checking
+- Multi-architecture Linux images for both executables
 
-## Prerequisites
+## Requirements
 
-- Swift 6 or later, macOS, linux
-- Access to a UniFi controller with API key
-- MQTT broker credentials
+- A UniFi controller and API key
+- An MQTT broker
+- For `unifimqtt2dns`, a Hetzner zone identifier and API token
+- Swift 6.2 or newer for source builds; macOS 15 is the declared Apple platform
+- Docker for local or Linux container workflows
 
-## Installation
+## Clone and build
 
-1. **Clone the Repository:**
+```sh
+git clone https://gitmaster.jinx.eu/jnxpublic/unifi2mqtt.git
+cd unifi2mqtt
+swift build -c release
+swift test
+```
 
-   ```bash
-   git clone https://github.com/jollyjinx/unifi2mqtt.git
-    ```
+The release executables are `.build/release/unifi2mqtt` and `.build/release/unifimqtt2dns`.
 
-1. **Build the Project (if swift is installed):**
+## Run unifi2mqtt
 
-    
-    ```bash
-    cd unifi2mqtt
-    swift build -c release
-    ```
-1. **Build the Project via docker:**
+The UniFi API key can be provided with `UNIFI_API_KEY` or `--unifi-api-key`:
 
-    ```bash
-    docker build . --file unifi2mqtt.product.dockerfile --tag unifi2mqtt
-    docker run --name unifi2mqtt unifi2mqtt --unifi-api-key <unifi-api-key> .....
-    ```
+```sh
+UNIFI_API_KEY='replace-me' \
+.build/release/unifi2mqtt \
+  --unifi-hostname unifi.local \
+  --mqtt-hostname mqtt.local \
+  --mqtt-username mqtt \
+  --mqtt-password 'replace-me'
+```
 
-1. **Run the Project with docker:**
+Important release defaults:
 
-    ```bash
-    docker run --name unifi2mqtt jollyjinx/unifi2mqtt:latest unifi2mqtt --unifi-api-key <unifi-api-key> .....
-    ```
+| Option | Default |
+| --- | --- |
+| `--unifi-port` | `8443` |
+| `--request-interval` | `15` seconds |
+| `--mqtt-port` | `1883` |
+| `--basetopic` | `unifi/` |
+| `--minimum-emit-interval` | `1` second |
+| `--maximum-emit-interval` | `60` seconds |
+| `--publishing-options` | `hostsbynetwork,olddevicesbytype` |
 
-    
-1. **Run the Executable:**
+`--publishing-options` accepts a comma-separated selection of host, device, device-detail, and legacy-device topic families. Run the executable with `--help` for the complete current list and descriptions.
 
-    ```bash
-    .build/release/unifi2mqtt
-    
-    USAGE: unifi2mqtt [<options>] --unifi-api-key <unifi-api-key>
+Published paths are formed from the base topic, publishing option, and the selected identifier. For example, the default network-oriented client path is below:
 
-    OPTIONS:
-    --log-level <log-level> Set the log level. (values: trace, debug, info, notice, warning, error, critical; default: debug)
-    --json-output           send json output to stdout
-    --unifi-hostname <unifi-hostname>
-                          Unifi hostname (default: unifi)
-    --unifi-port <unifi-port>
-                          Unifi port (default: 8443)
-    --unifi-api-key <unifi-api-key>
-                          Unifi API key
-    --unifi-site-id <unifi-site-id>
-                          Unifi site id
-    -r, --request-interval <request-interval>
-                          Unifi request interval. (default: 5.0)
-    --publishing-options <options>
-                          Specify publishing options as a comma-separated list. (default: hostsbynetwork, olddevicesbytype)
-        Available options: 
-        - hostsbyid: Publish hosts by their unifi id
-        - hostsbyip: Publish hosts by IP address
-        - hostsbyname: Publish hosts by name
-        - hostsbymac: Publish hosts by MAC address
-        - hostsbynetwork: Publish hosts by network
-        - devicesbyid: Publish unifi devices by their unifi id
-        - devicesbyip: Publish unifi devices by IP address
-        - devicesbyname: Publish unifi devices by name
-        - devicesbymac: Publish unifi devices by MAC address
-        - devicedetailsbyid: Publish unifi device details by their unifi id
-        - devicedetailsbyip: Publish unifi device details by IP address
-        - devicedetailsbyname: Publish unifi device details by name
-        - devicedetailsbymac: Publish unifi device details by MAC address
-        - olddevicesbytype: Publish old unifi device details by type
-    --mqtt-hostname <mqtt-hostname>
-                          MQTT Server hostname (default: mqtt)
-    --mqtt-port <mqtt-port> MQTT Server port (default: 1883)
-    --mqtt-username <mqtt-username>
-                          MQTT Server username (default: mqtt)
-    --mqtt-password <mqtt-password>
-                          MQTT Server password
-    --minimum-emit-interval <minimum-emit-interval>
-                          Minimum Emit Interval to send updates to mqtt Server. (default: 1.0)
-    --maximum-emit-interval <maximum-emit-interval>
-                          Maximum Emit Interval to send updates to mqtt Server. (default: 60.0)
-    -b, --basetopic <basetopic>
-                          MQTT Server topic. (default: example/unifi/)
-    --retain                Retain messages on mqtt server
-    -h, --help              Show help information.
-    ```
+```text
+unifi/hostsbynetwork/<network>/<client-ip>
+```
 
-1. **Run the Hetzner DNS updater:**
+Use `--retain` when the broker should retain published messages. `--json-output` additionally writes JSON payloads to standard output.
 
-    `unifimqtt2dns` subscribes to `unifi/hostsbynetwork/+/+` by default, filters the same IPv4 ranges as the old Perl script, checks that the target Hetzner `A` record currently has `ttl = 60`, and only then updates the Hetzner `A` rrset.
+## Run unifimqtt2dns
 
-    ```bash
-    HETZNER_ZONE_IDENTIFIER=example.com \
-    HETZNER_API_TOKEN=... \
-    .build/release/unifimqtt2dns \
-      --mqtt-hostname mqtt \
-      --mqtt-username mqtt \
-      --mqtt-password secret
-    ```
+The DNS updater subscribes to `unifi/hostsbynetwork/+/+` in release builds. It accepts the Hetzner zone and token through environment variables or command-line options:
 
-    If your MQTT client names are FQDNs instead of relative hostnames, also pass:
+```sh
+HETZNER_ZONE_IDENTIFIER='example.com' \
+HETZNER_API_TOKEN='replace-me' \
+.build/release/unifimqtt2dns \
+  --mqtt-hostname mqtt.local \
+  --mqtt-username mqtt \
+  --mqtt-password 'replace-me'
+```
 
-    ```bash
-    --hetzner-zone-name example.com
-    ```
+It updates only payloads whose IPv4 address matches `--allowed-ip-regex`, whose normalized hostname identifies a Hetzner `A` record with TTL `60`, and whose cooldown permits an update. If MQTT hostnames are fully qualified, pass `--hetzner-zone-name example.com` so they can be normalized before lookup.
 
+Review the default allowed-IP regular expression before deployment; it is intentionally tailored to the original private-network ranges. Use `unifimqtt2dns --help` for the topic-filter, cooldown, record-refresh, and filtering options.
 
+## Published container images
 
-## Further reading
+The release workflow publishes one image per executable:
 
-Some documentation and resources that might be helpful:
+```text
+ghcr.io/jollyjinx/unifi2mqtt
+ghcr.io/jollyjinx/unifimqtt2dns
+```
 
-- https://unifi.local/unifi-api/network
-- https://ubntwiki.com/products/software/unifi-controller/api
-- https://developer.ui.com/site-manager-api/
-- https://github.com/Art-of-WiFi/UniFi-API-client
+`latest` and `main` follow the main branch. `development` follows the development branch. Version tags are published for matching Git tags.
+
+```sh
+docker run --rm --name unifi2mqtt \
+  --env UNIFI_API_KEY='replace-me' \
+  ghcr.io/jollyjinx/unifi2mqtt:latest \
+  --unifi-hostname unifi.local \
+  --mqtt-hostname mqtt.local \
+  --mqtt-username mqtt \
+  --mqtt-password 'replace-me'
+
+docker run --rm --name unifimqtt2dns \
+  --env HETZNER_ZONE_IDENTIFIER='example.com' \
+  --env HETZNER_API_TOKEN='replace-me' \
+  ghcr.io/jollyjinx/unifimqtt2dns:latest \
+  --mqtt-hostname mqtt.local \
+  --mqtt-username mqtt \
+  --mqtt-password 'replace-me'
+```
+
+Prefer a versioned image tag for reproducible deployments. Be aware that command-line secrets can be visible in process and container metadata; restrict access to the host and orchestration configuration.
+
+## Build container images locally
+
+```sh
+docker build . \
+  --file unifi2mqtt.product.dockerfile \
+  --build-arg PRODUCT=unifi2mqtt \
+  --tag unifi2mqtt
+
+docker build . \
+  --file unifi2mqtt.product.dockerfile \
+  --build-arg PRODUCT=unifimqtt2dns \
+  --tag unifimqtt2dns
+```
+
+The images run as an unprivileged `appuser` and use the selected executable as their entry point.
+
+## Operations
+
+Send `SIGUSR1` to either long-running process to cycle its JLog verbosity. Do not send secrets to logs or JSON-output pipelines.
+
+For build commands, runtime defaults, and verification, see [docs/OPERATIONS.md](docs/OPERATIONS.md). The complete documentation map is [docs/INDEX.md](docs/INDEX.md), and agent-oriented routing starts at [AI/README.md](AI/README.md).
+
+## References
+
+- [UniFi Site Manager API](https://developer.ui.com/site-manager-api/)
+- [Art-of-WiFi UniFi API client](https://github.com/Art-of-WiFi/UniFi-API-client)
+
+## License
+
+See [LICENSE](LICENSE).
