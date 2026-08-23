@@ -17,7 +17,7 @@
 - A UniFi controller and API key
 - An MQTT broker
 - For `unifimqtt2dns`, a Hetzner zone identifier and API token
-- Swift 6.2 or newer for source builds; macOS 15 is the declared Apple platform
+- Swift 6.2.3 or newer for source builds; macOS 15 is the declared Apple platform
 - Docker for local or Linux container workflows
 
 ## Clone and build
@@ -129,6 +129,26 @@ docker build . \
 ```
 
 The images run as an unprivileged `appuser` and use the selected executable as their entry point.
+
+## Build and push container images
+
+The publishing script builds both products for AMD64 and ARM64 by default. Select exactly one
+registry; the image tag defaults to the normalized current branch name:
+
+```sh
+./scripts/build_and_push_image.sh --gitmaster
+./scripts/build_and_push_image.sh --github
+```
+
+Select one product or architecture for a faster development build, or override the tag explicitly:
+
+```sh
+./scripts/build_and_push_image.sh --gitmaster --unifi2mqtt --arm64 --tag development
+./scripts/build_and_push_image.sh --github --unifimqtt2dns --amd64 --tag test-amd64
+```
+
+On macOS the script uses Apple Container. On other hosts it uses Docker Buildx. Authenticate with
+the selected registry before running it.
 
 ## Operations
 

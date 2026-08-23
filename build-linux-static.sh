@@ -17,7 +17,7 @@ do
       -e HOME=/tmp \
       -v "$(pwd):/workspace" \
       -w /workspace \
-      swift:6.2.1-jammy \
+      swift:6.2.3-jammy \
       bash -lc "rm -rf '$scratchdir' && \
                 swift build -c release --static-swift-stdlib --jobs 1 --scratch-path '$scratchdir' && \
                 mkdir -p '$packagedir' && \

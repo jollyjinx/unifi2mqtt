@@ -10,6 +10,8 @@ related:
   - ../README.md
   - ../Package.swift
   - ../unifi2mqtt.product.dockerfile
+  - ../scripts/build_and_push_image.sh
+  - ../scripts/container_tag_for_branch.sh
 commands:
   build: swift build
   test: swift test
@@ -26,7 +28,7 @@ swift test
 swift build -c release
 ```
 
-The package declares Swift tools version 6.2 and enables complete strict concurrency checking.
+The package declares Swift tools version 6.2.3 and enables complete strict concurrency checking. The patch-level minimum matches the `mqtt-nio` `main` branch requirement.
 
 ## Run unifi2mqtt
 
@@ -79,6 +81,19 @@ docker build . \
   --build-arg PRODUCT=unifimqtt2dns \
   --tag unifimqtt2dns
 ```
+
+Build and push both multi-architecture images to one registry with the branch name as the default
+tag:
+
+```bash
+./scripts/build_and_push_image.sh --gitmaster
+./scripts/build_and_push_image.sh --github
+```
+
+The script mirrors the scannerserver publishing interface. It accepts `--arm64` or `--amd64`,
+`--tag TAG`, and `--unifi2mqtt` or `--unifimqtt2dns`. With no architecture or product selection it
+publishes both architectures for both products. It uses Apple Container on macOS and Docker Buildx
+elsewhere; registry authentication is an operator prerequisite.
 
 Run published images:
 
