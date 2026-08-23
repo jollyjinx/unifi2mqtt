@@ -9,7 +9,7 @@
 - JSON output mode for inspection and pipelines
 - Hetzner DNS updates with IPv4 filtering, TTL eligibility checks, caching, and per-host cooldown
 - Runtime log-level cycling with `SIGUSR1`
-- Swift 6.2 strict-concurrency checking
+- Swift 6.3 strict-concurrency checking
 - Multi-architecture Linux images for both executables
 
 ## Requirements
@@ -17,7 +17,7 @@
 - A UniFi controller and API key
 - An MQTT broker
 - For `unifimqtt2dns`, a Hetzner zone identifier and API token
-- Swift 6.2.3 or newer for source builds; macOS 15 is the declared Apple platform
+- Swift 6.3 or newer for source builds; macOS 15 is the declared Apple platform
 - Docker for local or Linux container workflows
 
 ## Clone and build

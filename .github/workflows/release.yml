@@ -28,7 +28,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    container: swift:6.2.3-jammy
+    container: swift:6.3-jammy
 
     steps:
       - name: Check out repository

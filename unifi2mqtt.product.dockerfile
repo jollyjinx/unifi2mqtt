@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM swift:6.2.3-jammy AS builder
+FROM swift:6.3-jammy AS builder
 
 ARG PRODUCT=unifi2mqtt
 

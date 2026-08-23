@@ -28,7 +28,7 @@ swift test
 swift build -c release
 ```
 
-The package declares Swift tools version 6.2.3 and enables complete strict concurrency checking. The patch-level minimum matches the `mqtt-nio` `main` branch requirement.
+The package declares Swift tools version 6.3 and enables complete strict concurrency checking. This also satisfies the `mqtt-nio` `main` branch requirement.
 
 ## Run unifi2mqtt
 
