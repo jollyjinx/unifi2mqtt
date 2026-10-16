@@ -28,7 +28,7 @@ swift test
 swift build -c release
 ```
 
-The package declares Swift tools version 6.3 and enables complete strict concurrency checking. This also satisfies the `mqtt-nio` `main` branch requirement.
+The package declares Swift tools version 6.3 and enables complete strict concurrency checking. This also satisfies the upstream `mqtt-nio` `3.0.0-rc.1` requirement of Swift 6.2.3 or newer. The MQTT dependency is pinned to that release candidate in `Package.swift`.
 
 ## Run unifi2mqtt
 

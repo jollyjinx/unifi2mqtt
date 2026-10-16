@@ -57,7 +57,7 @@ source_landmarks:
 The package uses:
 
 - `swift-argument-parser` for command-line parsing.
-- The `jollyjinx/mqtt-nio` fork's `main` branch for scoped async MQTT connections, publishing, and subscriptions.
+- Upstream `swift-server-community/mqtt-nio`, pinned to `3.0.0-rc.1`, for scoped async MQTT connections, publishing, and subscriptions.
 - `async-http-client` and `swift-nio` in `UnifiLibrary`.
 - `JLog` for logging.
 - `hetzner-dyndns-cgi` for DNS updates.

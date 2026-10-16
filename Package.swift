@@ -12,7 +12,7 @@ let package = Package(name: "unifi2mqtt",
                       ],
                       dependencies: [
                           .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
-                          .package(url: "https://github.com/jollyjinx/mqtt-nio.git", branch: "main"),
+                          .package(url: "https://github.com/swift-server-community/mqtt-nio.git", exact: "3.0.0-rc.1"),
                           .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.25.2"),
                           .package(url: "https://github.com/apple/swift-nio.git", from: "2.79.0"),
                           .package(url: "https://github.com/jollyjinx/JLog", .upToNextMajor(from: "0.0.7")),
